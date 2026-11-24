@@ -11,6 +11,7 @@ export default function Home() {
   const [stats, setStats] = useState({ usuarios: 0, turnosHoy: 0, reservados: 0, completados: 0 });
 
   const esAdmin = usuario?.rol === 'admin';
+  const tipoNegocio = ({ gimnasio: 'Fitness', barberia: 'Barbería', peluqueria: 'Peluquería', estetica: 'Estética', consultorio: 'Consultorio', tatuajes: 'Estudio de tatuajes', clases: 'Academia', general: 'Servicios' })[usuario?.tipoNegocio] || 'Negocio';
 
   useEffect(() => {
     const cargar = async () => {
@@ -39,65 +40,39 @@ export default function Home() {
   }, [esAdmin, usuario?.timezone]);
 
   return (
-    <div className={`min-h-screen text-white selection:bg-sky-500/30 ${esAdmin ? 'bg-[#05080d]' : 'bg-[#05070f]'}`}>
+    <div className="min-h-screen bg-[#f4f6f8] text-[#15263b] selection:bg-[#cbd8e5]">
       
       {/* Luces Ambientales (Glows) */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className={`absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-20 ${esAdmin ? 'bg-blue-600' : 'bg-sky-600'}`} />
-        <div className={`absolute bottom-[5%] -right-[5%] w-[30%] h-[30%] rounded-full blur-[100px] opacity-10 ${esAdmin ? 'bg-blue-400' : 'bg-sky-400'}`} />
-      </div>
-
-      {/* Navbar Minimalista */}
-      <nav className="relative z-40 flex items-center justify-between px-6 py-5 backdrop-blur-md border-b border-white/[0.03]">
+      <nav className="relative z-40 flex items-center justify-between border-b border-[#dfe4ea] bg-white px-5 py-4 sm:px-8">
         <button 
           onClick={() => setMenuAbierto(true)} 
-          className="p-2 -ml-2 rounded-xl hover:bg-white/5 transition-all duration-300 group active:scale-90"
+          className="rounded-lg border border-[#dfe4ea] px-3 py-2 text-sm text-[#526981] hover:bg-[#f4f6f8]"
         >
-          <div className="flex flex-col gap-1.5">
-            <span className="block w-6 h-[1.5px] bg-white/80 group-hover:bg-white transition-colors" />
-            <span className="block w-4 h-[1.5px] bg-white/50 group-hover:w-6 group-hover:bg-white transition-all" />
-          </div>
+          Menú
         </button>
 
         <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
-          <span className="font-semibold text-lg tracking-wide">{usuario?.organizacion || 'Agenda'}</span>
-          <div className={`h-[2px] w-full rounded-full ${esAdmin ? 'bg-blue-500' : 'bg-sky-500'}`} />
+          <span className="font-semibold tracking-wide">SHIFTS</span>
+          <span className="text-xs text-[#718197]">{usuario?.organizacion || 'Tu espacio'}</span>
         </div>
 
         <button 
           onClick={() => navigate(esAdmin ? '/admin' : '/mis-datos')}
-          className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold text-sm transition-all shadow-xl active:scale-95 ${
-            esAdmin ? 'border-blue-500/30 bg-blue-500/10 text-blue-400' : 'border-sky-500/30 bg-sky-500/10 text-sky-400'
-          }`}
+          className="grid h-10 w-10 place-items-center rounded-xl bg-[#284361] font-semibold text-white"
         >
           {usuario?.nombre?.charAt(0).toUpperCase()}
         </button>
       </nav>
 
       {/* Contenido Principal */}
-      <main className="relative z-10 px-6 pt-8 pb-20 max-w-4xl mx-auto space-y-8">
+      <main className="mx-auto max-w-5xl space-y-6 px-5 py-8 sm:px-8">
         
         {/* Card de Bienvenida Premium */}
         <section className="animate-fadeIn">
-          <div className={`p-8 rounded-[2rem] border relative overflow-hidden group transition-all duration-500 ${
-            esAdmin ? 'bg-blue-900/10 border-blue-500/20' : 'bg-white/[0.03] border-white/10'
-          }`}>
-            <div className={`absolute top-0 right-0 w-48 h-48 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2 transition-opacity duration-500 opacity-30 group-hover:opacity-50 ${esAdmin ? 'bg-blue-600' : 'bg-sky-600'}`} />
-            
-            <div className="relative z-10">
-              <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 ${
-                esAdmin ? 'bg-blue-500/20 text-blue-400' : 'bg-sky-500/20 text-sky-400'
-              }`}>
-                {esAdmin ? 'Administración' : 'Cuenta del espacio'}
-              </span>
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-2">
-                Hola, {usuario?.nombre} <span className="inline-block animate-float">{esAdmin ? '⚡' : '🔥'}</span>
-              </h1>
-              <div className="flex items-center gap-2 opacity-60">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-sm font-medium">Conectado ahora</span>
-              </div>
-            </div>
+          <div className="rounded-2xl border border-[#dfe4ea] bg-white p-6 sm:p-8">
+            <span className="text-xs font-semibold uppercase tracking-[.16em] text-[#64778d]">{esAdmin ? `Panel del negocio · ${tipoNegocio}` : 'Tu cuenta'}</span>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Hola, {usuario?.nombre}</h1>
+            <p className="mt-2 text-sm text-[#718197]">{esAdmin ? 'Tu agenda y operación en un mismo lugar.' : `Accedé a tus turnos en ${usuario?.organizacion || 'tu espacio'}.`}</p>
           </div>
         </section>
 
@@ -105,15 +80,15 @@ export default function Home() {
         {esAdmin && (
           <section className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-fadeIn delay-100">
             {[
-              { label: 'Socios', val: stats.usuarios, icon: '👥' },
-              { label: 'Turnos', val: stats.turnosHoy, icon: '📅' },
-              { label: 'Checks', val: stats.completados, icon: '✅' },
-              { label: 'Espera', val: stats.reservados, icon: '⏳' },
+              { label: 'Clientes', val: stats.usuarios, icon: '01' },
+              { label: 'Turnos de hoy', val: stats.turnosHoy, icon: '02' },
+              { label: 'Asistencias', val: stats.completados, icon: '03' },
+              { label: 'Pendientes', val: stats.reservados, icon: '04' },
             ].map((s, i) => (
-              <div key={i} className="bg-white/[0.02] border border-white/5 p-5 rounded-[1.5rem] hover:bg-white/[0.05] transition-colors">
-                <span className="text-lg mb-2 block">{s.icon}</span>
-                <p className="text-2xl font-black">{s.val}</p>
-                <p className="text-[10px] uppercase tracking-widest opacity-40 font-bold">{s.label}</p>
+              <div key={i} className="rounded-2xl border border-[#dfe4ea] bg-white p-5 transition hover:border-[#bdcbd8]">
+                <span className="mb-2 block text-xs font-semibold text-[#718197]">{s.icon}</span>
+                <p className="text-2xl font-semibold">{s.val}</p>
+                <p className="mt-1 text-xs text-[#718197]">{s.label}</p>
               </div>
             ))}
           </section>
@@ -123,46 +98,44 @@ export default function Home() {
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
             onClick={() => navigate(esAdmin ? '/admin' : '/turnos')}
-            className={`group relative overflow-hidden p-6 rounded-[1.8rem] transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] md:col-span-2 flex items-center justify-between shadow-2xl ${
-              esAdmin ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/40' : 'bg-sky-500 hover:bg-sky-600 shadow-sky-500/40'
-            }`}
+            className="group relative flex items-center justify-between gap-5 rounded-2xl bg-[#142942] p-6 transition hover:bg-[#203b59] md:col-span-2"
           >
             <div className="text-left">
-              <p className="text-white font-black text-xl md:text-2xl">{esAdmin ? 'Administrar Gimnasio' : 'Reservar mi lugar'}</p>
-              <p className="text-white/80 text-sm font-medium">{esAdmin ? 'Gestionar turnos y usuarios' : 'Asegura tu entrenamiento de hoy'}</p>
+              <p className="text-white font-semibold text-xl md:text-2xl">{esAdmin ? `Administrar ${usuario?.organizacion || 'negocio'}` : 'Reservar un turno'}</p>
+              <p className="mt-1 text-sm text-slate-300">{esAdmin ? 'Gestionar turnos, clientes y agenda' : `Elegí un horario disponible en ${usuario?.organizacion || 'tu espacio'}`}</p>
             </div>
-            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">
-              {esAdmin ? '🛠️' : '⚡'}
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/10 text-sm text-white transition group-hover:bg-white/15">
+              →
             </div>
           </button>
 
           {/* Cards Secundarias */}
           <div 
             onClick={() => navigate(esAdmin ? '/admin' : '/turnos')}
-            className="p-6 rounded-[1.8rem] bg-white/[0.03] border border-white/10 hover:border-white/20 transition-all cursor-pointer group"
+            className="rounded-2xl border border-[#dfe4ea] bg-white p-5 transition hover:border-[#bdcbd8] cursor-pointer group"
           >
             <div className="flex justify-between items-start mb-4">
-              <span className="text-3xl grayscale group-hover:grayscale-0 transition-all">🗓️</span>
-              <span className="text-xs font-black opacity-30 group-hover:opacity-100 transition-opacity uppercase tracking-widest italic">Ver más</span>
+              <span className="text-xs font-semibold text-[#718197]">AGENDA</span>
+              <span className="text-xs text-[#718197]">Abrir →</span>
             </div>
-            <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">
+            <p className="text-xs text-[#718197]">
               {esAdmin ? 'Actividad Total' : 'Próxima Clase'}
             </p>
-            <p className="text-xl font-black mt-1">
+            <p className="text-lg font-semibold mt-2">
               {esAdmin ? `${stats.turnosHoy} Turnos Hoy` : (proximoTurno ? `${proximoTurno.hora?.slice(0,5)} hs` : 'Sin reservas')}
             </p>
           </div>
 
           <div 
             onClick={() => navigate(esAdmin ? '/admin' : '/mis-datos')}
-            className="p-6 rounded-[1.8rem] bg-white/[0.03] border border-white/10 hover:border-white/20 transition-all cursor-pointer group"
+            className="rounded-2xl border border-[#dfe4ea] bg-white p-5 transition hover:border-[#bdcbd8] cursor-pointer group"
           >
             <div className="flex justify-between items-start mb-4">
-              <span className="text-3xl grayscale group-hover:grayscale-0 transition-all">👤</span>
-              <span className="text-xs font-black opacity-30 group-hover:opacity-100 transition-opacity uppercase tracking-widest italic">Gestionar</span>
+              <span className="text-xs font-semibold text-[#718197]">CUENTA</span>
+              <span className="text-xs text-[#718197]">Gestionar →</span>
             </div>
-            <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Mi Cuenta</p>
-            <p className="text-xl font-black mt-1">Perfil y Ajustes</p>
+            <p className="text-xs text-[#718197]">Mi cuenta</p>
+            <p className="mt-2 text-lg font-semibold">Perfil y ajustes</p>
           </div>
         </section>
 
@@ -171,19 +144,15 @@ export default function Home() {
       {/* Menú Lateral Rediseñado */}
       {menuAbierto && (
         <div className="fixed inset-0 z-[100] flex animate-fadeIn">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setMenuAbierto(false)} />
+          <div className="absolute inset-0 bg-[#142942]/35 backdrop-blur-sm" onClick={() => setMenuAbierto(false)} />
           
-          <aside className={`relative w-80 h-full flex flex-col shadow-2xl animate-slideInRight ${
-            esAdmin ? 'bg-[#080d14] border-l border-blue-900/30' : 'bg-[#0f1117] border-l border-white/10'
-          }`}>
-            <div className="p-8 border-b border-white/5">
-              <div className={`w-16 h-16 rounded-[1.3rem] flex items-center justify-center text-2xl font-black mb-4 shadow-2xl ${
-                esAdmin ? 'bg-blue-600 shadow-blue-600/30' : 'bg-sky-500 shadow-sky-500/30'
-              }`}>
+          <aside className="relative flex h-full w-80 flex-col border-r border-[#dfe4ea] bg-white shadow-2xl animate-slideInRight">
+            <div className="border-b border-[#e8ecf0] p-7">
+              <div className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-[#284361] font-semibold text-white">
                 {usuario?.nombre?.charAt(0).toUpperCase()}
               </div>
-              <h3 className="text-xl font-black leading-none">{usuario?.nombre} {usuario?.apellido}</h3>
-              <p className="text-xs opacity-40 mt-2 font-bold tracking-tight">{usuario?.email}</p>
+              <h3 className="font-semibold leading-none text-[#15263b]">{usuario?.nombre} {usuario?.apellido}</h3>
+              <p className="mt-2 text-xs text-[#718197]">{usuario?.email}</p>
             </div>
 
             <nav className="flex-1 px-4 py-6 space-y-2">
@@ -198,7 +167,7 @@ export default function Home() {
                 <button 
                   key={item.path} 
                   onClick={() => { navigate(item.path); setMenuAbierto(false); }} 
-                  className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl hover:bg-white/[0.04] text-white/70 hover:text-white transition-all font-bold group"
+                  className="w-full flex items-center gap-4 rounded-xl px-4 py-3 text-left text-[#526981] hover:bg-[#f4f6f8] transition-all font-medium group"
                 >
                   <span className="text-lg group-hover:scale-125 transition-transform">{item.icon}</span>
                   <span className="text-sm">{item.label}</span>
@@ -209,7 +178,7 @@ export default function Home() {
             <div className="p-6 border-t border-white/5">
               <button 
                 onClick={() => { logout(); navigate('/'); }} 
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all font-black text-xs uppercase tracking-widest"
+                className="w-full flex items-center justify-center gap-3 rounded-xl border border-[#dfe4ea] px-4 py-3 text-sm font-medium text-[#526981] transition hover:bg-[#f4f6f8]"
               >
                 Cerrar Sesión 🚪
               </button>

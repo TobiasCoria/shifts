@@ -35,11 +35,21 @@ app.get('/recordatorios', async (req, res) => {
   try {
     const pool = require('./src/config/db');
     const { enviarRecordatorio } = require('./src/services/emailService');
-    const [turnos] = await pool.execute(
-      "SELECT t.*, u.nombre, u.email FROM turnos t JOIN usuarios u ON t.usuario_id = u.id WHERE t.fecha = DATE_ADD(CURRENT_DATE, INTERVAL 1 DAY) AND t.estado = 'reservado'"
-    );
-    const resultados = await Promise.allSettled(turnos.map((turno) => enviarRecordatorio({ nombre: turno.nombre, email: turno.email }, turno)));
-    res.json({ mensaje: `${resultados.filter((r) => r.status === 'fulfilled').length} recordatorios enviados` });
+    const { fechaLocal } = require('./src/utils/agenda');
+    const [organizaciones] = await pool.execute('SELECT id, nombre, zona_horaria FROM organizaciones');
+    const turnos = [];
+    for (const organizacion of organizaciones) {
+      const hoy = fechaLocal(organizacion.zona_horaria).fecha;
+      const manana = new Date(Date.parse(`${hoy}T12:00:00Z`) + 86400000).toISOString().slice(0, 10);
+      const [reservas] = await pool.execute(
+        "SELECT t.*, COALESCE(t.nombre_cliente, u.nombre) AS nombre, COALESCE(t.email_cliente, u.email) AS email, s.nombre AS servicio FROM turnos t LEFT JOIN usuarios u ON u.id = t.usuario_id LEFT JOIN servicios s ON s.id = t.servicio_id WHERE t.organizacion_id = ? AND t.fecha = ? AND t.estado = 'reservado'",
+        [organizacion.id, manana]
+      );
+      turnos.push(...reservas.map((turno) => ({ ...turno, negocio: organizacion.nombre })));
+    }
+    const resultados = await Promise.allSettled(turnos.map((turno) => enviarRecordatorio({ nombre: turno.nombre, email: turno.email }, turno, turno.negocio)));
+    const enviados = resultados.filter((resultado) => resultado.status === 'fulfilled' && resultado.value === true).length;
+    res.json({ mensaje: `${enviados} recordatorios enviados`, procesados: turnos.length });
   } catch (err) { console.error('[recordatorios]', err.code || err.message); res.status(500).json({ error: 'No se pudieron enviar los recordatorios' }); }
 });
 

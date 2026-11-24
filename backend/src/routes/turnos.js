@@ -4,13 +4,20 @@ const {
   getTurnos, 
   getMisTurnos, 
   crearTurno, 
+  crearTurnoPublico,
+  gestionarTurnoPublico,
   cancelarTurno, 
   getDisponibilidad, 
+  getDisponibilidadPublica,
   marcarAsistencia,
   getCapacidadDia
 } = require('../controllers/turnosController');
 
 const { verificarToken, soloAdmin } = require('../middlewares/auth');
+
+router.post('/publico', crearTurnoPublico);
+router.post('/publico/:token', gestionarTurnoPublico);
+router.get('/disponibilidad-publica', getDisponibilidadPublica);
 
 // Marcar asistencia (admin)
 router.patch('/:id/estado', verificarToken, soloAdmin, marcarAsistencia);

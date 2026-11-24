@@ -10,10 +10,14 @@ fs.mkdirSync(uploadDir, { recursive: true });
 const getUsuarios = async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      `SELECT 
-        u.id, u.nombre, u.apellido, u.email, u.documento, m.rol,
-        u.creado_en
-      FROM usuarios u JOIN membresias m ON m.usuario_id = u.id AND m.organizacion_id = ? WHERE m.estado = 'activo'`, [req.usuario.organizacionId]
+      `SELECT u.id, u.nombre, u.apellido, u.email, u.documento, m.rol, u.creado_en, 'cuenta' AS origen
+       FROM usuarios u JOIN membresias m ON m.usuario_id = u.id AND m.organizacion_id = ? WHERE m.estado = 'activo'
+       UNION ALL
+       SELECT -CAST(MIN(t.id) AS SIGNED) AS id, MAX(t.nombre_cliente) AS nombre, '' AS apellido, LOWER(t.email_cliente) AS email, NULL AS documento, 'cliente' AS rol, MIN(CONCAT(DATE_FORMAT(t.fecha, '%Y-%m-%d'), ' ', TIME_FORMAT(t.hora, '%H:%i:%s'))) AS creado_en, 'reserva' AS origen
+       FROM turnos t LEFT JOIN (SELECT u.id, u.email, m.organizacion_id FROM usuarios u JOIN membresias m ON m.usuario_id = u.id AND m.estado = 'activo') u ON LOWER(u.email) = LOWER(t.email_cliente) AND u.organizacion_id = t.organizacion_id
+       WHERE t.organizacion_id = ? AND t.nombre_cliente IS NOT NULL AND t.email_cliente IS NOT NULL AND u.id IS NULL
+       GROUP BY LOWER(t.email_cliente)
+       ORDER BY nombre`, [req.usuario.organizacionId, req.usuario.organizacionId]
     );
     res.json(rows);
   } catch {

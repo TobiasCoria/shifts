@@ -5,6 +5,8 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import MisDatos from './pages/MisDatos';
 import Turnos from './pages/Turnos';
+import ReservaPublica from './pages/ReservaPublica';
+import GestionReserva from './pages/GestionReserva';
 
 const RutaProtegida = ({ children }) => {
   const { usuario, cargando } = useAuth();
@@ -23,6 +25,8 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/b/:slug" element={<ReservaPublica />} />
+          <Route path="/cancelar/:token" element={<GestionReserva />} />
           <Route path="/" element={<Login />} />
           <Route path="/home" element={<RutaProtegida><Home /></RutaProtegida>} />
           <Route path="/mis-datos" element={<RutaProtegida><MisDatos /></RutaProtegida>} />

@@ -41,17 +41,28 @@ async function migrar() {
         INDEX idx_membresias_usuario (usuario_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+    fase = 'preparar modelo multinegocio';
+    await addColumn('organizaciones', 'tipo_negocio', "VARCHAR(40) NOT NULL DEFAULT 'gimnasio'");
+    await addColumn('organizaciones', 'zona_horaria', "VARCHAR(80) NOT NULL DEFAULT 'America/Argentina/Buenos_Aires'");
+    await addColumn('organizaciones', 'minutos_cancelacion', 'INT NOT NULL DEFAULT 120');
+    await addColumn('membresias', 'rol', "VARCHAR(20) NOT NULL DEFAULT 'socio'");
+    await addColumn('membresias', 'estado', "VARCHAR(20) NOT NULL DEFAULT 'activo'");
     await connection.query(`
       CREATE TABLE IF NOT EXISTS servicios (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         organizacion_id BIGINT UNSIGNED NOT NULL,
         nombre VARCHAR(120) NOT NULL,
+        descripcion VARCHAR(500) NULL,
+        precio DECIMAL(10,2) NULL,
         duracion_minutos INT NOT NULL DEFAULT 60,
         capacidad INT NOT NULL DEFAULT 10,
         activo BOOLEAN NOT NULL DEFAULT TRUE,
         INDEX idx_servicios_org (organizacion_id, activo)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+    fase = 'ampliar servicios y reservas';
+    await addColumn('servicios', 'descripcion', 'VARCHAR(500) NULL');
+    await addColumn('servicios', 'precio', 'DECIMAL(10,2) NULL');
     await connection.query(`
       CREATE TABLE IF NOT EXISTS agenda_horarios (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -77,6 +88,16 @@ async function migrar() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
     await connection.query(`
+      CREATE TABLE IF NOT EXISTS negocio_recursos (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        organizacion_id BIGINT UNSIGNED NOT NULL,
+        nombre VARCHAR(120) NOT NULL,
+        tipo VARCHAR(40) NOT NULL DEFAULT 'profesional',
+        activo BOOLEAN NOT NULL DEFAULT TRUE,
+        INDEX idx_negocio_recursos (organizacion_id, activo)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS invitaciones (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         organizacion_id BIGINT UNSIGNED NOT NULL,
@@ -92,6 +113,14 @@ async function migrar() {
     await addColumn('usuarios', 'organizacion_actual_id', 'BIGINT UNSIGNED NULL');
     await addColumn('turnos', 'organizacion_id', 'BIGINT UNSIGNED NULL');
     await addColumn('turnos', 'servicio_id', 'BIGINT UNSIGNED NULL');
+    await addColumn('turnos', 'nombre_cliente', 'VARCHAR(120) NULL');
+    await addColumn('turnos', 'email_cliente', 'VARCHAR(254) NULL');
+    await addColumn('turnos', 'recurso_id', 'BIGINT UNSIGNED NULL');
+    fase = 'permitir reservas públicas sin cuenta';
+    const [turnoUserColumns] = await connection.query("SELECT COLUMN_TYPE, IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'turnos' AND COLUMN_NAME = 'usuario_id'");
+    if (turnoUserColumns[0]?.IS_NULLABLE === 'NO' && /^(bigint|int|mediumint|smallint|tinyint)/i.test(turnoUserColumns[0].COLUMN_TYPE)) {
+      await connection.query(`ALTER TABLE turnos MODIFY usuario_id ${turnoUserColumns[0].COLUMN_TYPE} NULL`);
+    }
     fase = 'ajustar documento opcional';
     const [documentColumns] = await connection.query("SELECT COLUMN_TYPE, IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'usuarios' AND COLUMN_NAME = 'documento'");
     if (documentColumns[0]?.IS_NULLABLE === 'NO' && /^(varchar|char|varbinary|binary)\(/i.test(documentColumns[0].COLUMN_TYPE)) {
