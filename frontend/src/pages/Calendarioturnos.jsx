@@ -17,9 +17,9 @@ export default function CalendarioTurnos() {
       const res = await api.get('/turnos');
       const turnosFormateados = res.data.map((turno) => ({
         id: turno.id.toString(),
-        title: `${turno.nombre} ${turno.apellido}`,
+        title: `${turno.nombre} ${turno.apellido}${turno.servicio ? ` · ${turno.servicio}` : ''}`,
         start: `${turno.fecha.split('T')[0]}T${turno.hora}`,
-        extendedProps: { estado: turno.estado, hora: turno.hora },
+        extendedProps: { estado: turno.estado, hora: turno.hora, servicio: turno.servicio, profesional: turno.profesional, sucursal: turno.sucursal },
         // Colores dinámicos basados en estado
         backgroundColor: turno.estado === 'completado' ? 'rgba(107, 143, 113, 0.16)' :
                          turno.estado === 'cancelado' ? 'rgba(100, 116, 139, 0.12)' : 'rgba(23, 43, 77, 0.10)',
@@ -121,6 +121,8 @@ export default function CalendarioTurnos() {
               <span className="text-xs font-medium uppercase tracking-[.16em] text-slate-500">Gestionar turno</span>
               <h3 className="text-2xl font-semibold text-slate-900 mt-2">{modalEvento.title}</h3>
               <p className="text-slate-500 text-sm mt-1">Horario: {modalEvento.hora} hs</p>
+              {modalEvento.profesional && <p className="mt-1 text-sm text-slate-600">Profesional: {modalEvento.profesional}</p>}
+              {modalEvento.sucursal && <p className="mt-1 text-sm text-slate-600">Sucursal: {modalEvento.sucursal}</p>}
             </div>
 
             <div className="space-y-3">

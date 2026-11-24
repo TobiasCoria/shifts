@@ -54,6 +54,7 @@ const registro = async (req, res) => {
       [nombreOrg, slug, tipoNegocio, zona]
     );
     const orgId = orgCreated.insertId;
+    await connection.execute('INSERT INTO negocio_sucursales (organizacion_id, nombre) VALUES (?, ?)', [orgId, 'Sucursal principal']);
     await connection.execute("INSERT INTO membresias (organizacion_id, usuario_id, rol) VALUES (?, ?, 'admin')", [orgId, usuarioId]);
     await connection.execute('UPDATE usuarios SET organizacion_actual_id = ? WHERE id = ?', [orgId, usuarioId]);
     const plantillas = {

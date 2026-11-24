@@ -98,6 +98,50 @@ async function migrar() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
     await connection.query(`
+      CREATE TABLE IF NOT EXISTS negocio_sucursales (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        organizacion_id BIGINT UNSIGNED NOT NULL,
+        nombre VARCHAR(120) NOT NULL,
+        direccion VARCHAR(255) NULL,
+        activo BOOLEAN NOT NULL DEFAULT TRUE,
+        creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_sucursales_org (organizacion_id, activo)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS agenda_especifica (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        organizacion_id BIGINT UNSIGNED NOT NULL,
+        servicio_id BIGINT UNSIGNED NOT NULL,
+        sucursal_id BIGINT UNSIGNED NULL,
+        recurso_id BIGINT UNSIGNED NULL,
+        dia_semana TINYINT UNSIGNED NOT NULL,
+        hora_inicio TIME NOT NULL,
+        hora_fin TIME NOT NULL,
+        intervalo_minutos INT NOT NULL DEFAULT 60,
+        activo BOOLEAN NOT NULL DEFAULT TRUE,
+        INDEX idx_agenda_especifica (organizacion_id, servicio_id, sucursal_id, recurso_id, dia_semana, activo)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS servicio_recursos (
+        organizacion_id BIGINT UNSIGNED NOT NULL,
+        servicio_id BIGINT UNSIGNED NOT NULL,
+        recurso_id BIGINT UNSIGNED NOT NULL,
+        PRIMARY KEY (organizacion_id, servicio_id, recurso_id),
+        INDEX idx_servicio_recursos_recurso (organizacion_id, recurso_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS sucursal_recursos (
+        organizacion_id BIGINT UNSIGNED NOT NULL,
+        sucursal_id BIGINT UNSIGNED NOT NULL,
+        recurso_id BIGINT UNSIGNED NOT NULL,
+        PRIMARY KEY (organizacion_id, sucursal_id, recurso_id),
+        INDEX idx_sucursal_recursos_recurso (organizacion_id, recurso_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS invitaciones (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         organizacion_id BIGINT UNSIGNED NOT NULL,
@@ -116,6 +160,7 @@ async function migrar() {
     await addColumn('turnos', 'nombre_cliente', 'VARCHAR(120) NULL');
     await addColumn('turnos', 'email_cliente', 'VARCHAR(254) NULL');
     await addColumn('turnos', 'recurso_id', 'BIGINT UNSIGNED NULL');
+    await addColumn('turnos', 'sucursal_id', 'BIGINT UNSIGNED NULL');
     fase = 'permitir reservas públicas sin cuenta';
     const [turnoUserColumns] = await connection.query("SELECT COLUMN_TYPE, IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'turnos' AND COLUMN_NAME = 'usuario_id'");
     if (turnoUserColumns[0]?.IS_NULLABLE === 'NO' && /^(bigint|int|mediumint|smallint|tinyint)/i.test(turnoUserColumns[0].COLUMN_TYPE)) {
@@ -128,6 +173,11 @@ async function migrar() {
     }
     fase = 'crear espacio TCGym';
     await connection.query("INSERT IGNORE INTO organizaciones (nombre, slug, tipo_negocio, zona_horaria) VALUES ('TCGym', 'tcgym', 'gimnasio', 'America/Argentina/Buenos_Aires')");
+    fase = 'preparar sucursales iniciales';
+    await connection.query("INSERT INTO negocio_sucursales (organizacion_id, nombre) SELECT o.id, 'Sucursal principal' FROM organizaciones o WHERE NOT EXISTS (SELECT 1 FROM negocio_sucursales b WHERE b.organizacion_id = o.id)");
+    await connection.query("UPDATE turnos t JOIN negocio_sucursales b ON b.organizacion_id = t.organizacion_id AND b.activo = 1 AND b.id = (SELECT MIN(b2.id) FROM negocio_sucursales b2 WHERE b2.organizacion_id = t.organizacion_id AND b2.activo = 1) SET t.sucursal_id = b.id WHERE t.sucursal_id IS NULL");
+    await connection.query("INSERT IGNORE INTO sucursal_recursos (organizacion_id, sucursal_id, recurso_id) SELECT r.organizacion_id, b.id, r.id FROM negocio_recursos r JOIN negocio_sucursales b ON b.organizacion_id = r.organizacion_id WHERE r.activo = 1 AND b.activo = 1");
+    await connection.query("INSERT IGNORE INTO servicio_recursos (organizacion_id, servicio_id, recurso_id) SELECT r.organizacion_id, s.id, r.id FROM negocio_recursos r JOIN servicios s ON s.organizacion_id = r.organizacion_id AND s.activo = 1 WHERE r.activo = 1");
     fase = 'crear servicio inicial';
     await connection.query("INSERT INTO servicios (organizacion_id, nombre, duracion_minutos, capacidad, activo) SELECT o.id, 'Entrenamiento libre', 60, 10, TRUE FROM organizaciones o WHERE o.slug = 'tcgym' AND NOT EXISTS (SELECT 1 FROM servicios s WHERE s.organizacion_id = o.id)");
     fase = 'crear horarios iniciales';
@@ -140,6 +190,8 @@ async function migrar() {
     await connection.query("UPDATE turnos SET organizacion_id = (SELECT id FROM organizaciones WHERE slug = 'tcgym' LIMIT 1) WHERE organizacion_id IS NULL");
     fase = 'asociar turnos al servicio inicial';
     await connection.query("UPDATE turnos t JOIN servicios s ON s.organizacion_id = t.organizacion_id SET t.servicio_id = s.id WHERE t.servicio_id IS NULL");
+    await connection.query("UPDATE turnos t JOIN negocio_sucursales b ON b.organizacion_id = t.organizacion_id AND b.activo = 1 AND b.id = (SELECT MIN(b2.id) FROM negocio_sucursales b2 WHERE b2.organizacion_id = t.organizacion_id AND b2.activo = 1) SET t.sucursal_id = b.id WHERE t.sucursal_id IS NULL");
+    await connection.query("INSERT IGNORE INTO servicio_recursos (organizacion_id, servicio_id, recurso_id) SELECT r.organizacion_id, s.id, r.id FROM negocio_recursos r JOIN servicios s ON s.organizacion_id = r.organizacion_id AND s.activo = 1 WHERE r.activo = 1");
   } catch (err) {
     console.error(`[migrations.${fase}]`, err.code || err.message, err.sqlMessage || '');
     throw err;

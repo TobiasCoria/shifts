@@ -12,6 +12,8 @@ export default function ReservaPublica() {
   const [espacio, setEspacio] = useState(null);
   const [servicioId, setServicioId] = useState('');
   const [recursoId, setRecursoId] = useState('');
+  const [sucursalId, setSucursalId] = useState('');
+  const [recursosDisponibles, setRecursosDisponibles] = useState([]);
   const [fecha, setFecha] = useState(fechaHoy());
   const [slots, setSlots] = useState([]);
   const [seleccionado, setSeleccionado] = useState('');
@@ -23,6 +25,7 @@ export default function ReservaPublica() {
     api.get(`/espacio/publico/${encodeURIComponent(slug)}`).then(({ data }) => {
       setEspacio(data);
       setServicioId(String(data.servicios[0]?.id || ''));
+      setSucursalId(String(data.sucursales[0]?.id || ''));
       setFecha(fechaHoy(data.organizacion.zona_horaria));
     }).catch((err) => setEstado((s) => ({ ...s, error: err.response?.data?.error || 'No se pudo abrir la página de reservas' }))).finally(() => setEstado((s) => ({ ...s, cargando: false })));
   }, [slug]);
@@ -30,14 +33,15 @@ export default function ReservaPublica() {
   const cargarDisponibilidad = useCallback(async () => {
     if (!servicioId || !fecha) return setSlots([]);
     try {
-      const { data } = await api.get('/turnos/disponibilidad-publica', { params: { slug, servicioId, fecha, recursoId: recursoId || undefined } });
+      const { data } = await api.get('/turnos/disponibilidad-publica', { params: { slug, servicioId, fecha, recursoId: recursoId || undefined, sucursalId: sucursalId || undefined } });
       setSlots(data.slots);
+      setRecursosDisponibles(data.recursos || []);
       setEstado((s) => ({ ...s, error: '' }));
     } catch (err) {
       setSlots([]);
       setEstado((s) => ({ ...s, error: err.response?.data?.error || 'No se pudo consultar disponibilidad' }));
     }
-  }, [fecha, recursoId, servicioId, slug]);
+  }, [fecha, recursoId, servicioId, slug, sucursalId]);
 
   useEffect(() => { void cargarDisponibilidad(); }, [cargarDisponibilidad]);
 
@@ -46,9 +50,9 @@ export default function ReservaPublica() {
     if (!seleccionado) return;
     setEstado((s) => ({ ...s, enviando: true, error: '', exito: '' }));
     try {
-      const { data } = await api.post('/turnos/publico', { organizacionSlug: slug, servicioId: Number(servicioId), recursoId: recursoId || undefined, fecha, hora: seleccionado, ...cliente });
+      const { data } = await api.post('/turnos/publico', { organizacionSlug: slug, servicioId: Number(servicioId), recursoId: recursoId || undefined, sucursalId: sucursalId || undefined, fecha, hora: seleccionado, ...cliente });
       setUrlCancelar(data.urlCancelar);
-      setEstado((s) => ({ ...s, exito: `Tu turno está confirmado${data.profesional ? ` con ${data.profesional}` : ''}. Guardá este enlace para gestionar la cancelación si lo necesitás.` }));
+      setEstado((s) => ({ ...s, exito: `Tu turno está confirmado${data.profesional ? ` con ${data.profesional}` : ''}${data.sucursal ? ` en ${data.sucursal}` : ''}. Guardá este enlace para gestionar la cancelación si lo necesitás.` }));
       setSeleccionado('');
       setCliente({ nombre: '', email: '' });
       await cargarDisponibilidad();
@@ -71,7 +75,8 @@ export default function ReservaPublica() {
         <a href={linkWhatsapp} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-[#355a77]">Compartir reserva por WhatsApp <span aria-hidden="true">↗</span></a>
       </section>
       <form onSubmit={reservar} className="space-y-5 rounded-2xl border border-[#dfe4ea] bg-white p-5 shadow-[0_12px_40px_rgba(20,41,66,.06)] md:p-7"><div><h3 className="text-lg font-semibold">Elegí fecha y horario</h3><p className="mt-1 text-sm text-[#718197]">{servicio ? `${servicio.nombre} · ${servicio.duracion_minutos} min` : 'Seleccioná un servicio'}</p></div>
-        {servicio && Number(servicio.capacidad) <= 1 && espacio.recursos.length > 0 && <label className="block space-y-2 text-sm font-medium">Profesional<select value={recursoId} onChange={(e) => { setRecursoId(e.target.value); setSeleccionado(''); }} className="w-full rounded-xl border border-[#dfe4ea] bg-white px-4 py-3 text-[#15263b]"><option value="">Cualquiera disponible</option>{espacio.recursos.map((recurso) => <option key={recurso.id} value={recurso.id}>{recurso.nombre}</option>)}</select></label>}
+        {espacio.sucursales?.length > 1 && <label className="block space-y-2 text-sm font-medium">Sucursal<select value={sucursalId} onChange={(e) => { setSucursalId(e.target.value); setRecursoId(''); setSeleccionado(''); }} className="w-full rounded-xl border border-[#dfe4ea] bg-white px-4 py-3 text-[#15263b]">{espacio.sucursales.map((branch) => <option key={branch.id} value={branch.id}>{branch.nombre}{branch.direccion ? ` · ${branch.direccion}` : ''}</option>)}</select></label>}
+        {servicio && Number(servicio.capacidad) <= 1 && recursosDisponibles.length > 0 && <label className="block space-y-2 text-sm font-medium">{['barberia', 'peluqueria', 'estetica', 'consultorio', 'tatuajes'].includes(espacio.organizacion.tipo_negocio) ? 'Profesional' : 'Profesional o recurso'}<select value={recursoId} onChange={(e) => { setRecursoId(e.target.value); setSeleccionado(''); }} className="w-full rounded-xl border border-[#dfe4ea] bg-white px-4 py-3 text-[#15263b]"><option value="">Cualquiera disponible</option>{recursosDisponibles.map((recurso) => <option key={recurso.id} value={recurso.id}>{recurso.nombre}</option>)}</select></label>}
         <label className="block space-y-2 text-sm font-medium">Fecha<input type="date" min={fechaHoy(espacio.organizacion.zona_horaria)} value={fecha} onChange={(e) => { setFecha(e.target.value); setSeleccionado(''); }} className="w-full rounded-xl border border-[#dfe4ea] bg-white px-4 py-3 text-[#15263b] [color-scheme:light]" required /></label>
         <div><p className="mb-3 text-sm font-medium">Horarios disponibles</p>{slots.length ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{slots.map((slot) => <button key={slot.hora} type="button" disabled={!slot.disponible} onClick={() => setSeleccionado(slot.hora)} className={`rounded-xl border px-3 py-3 text-sm font-medium transition ${seleccionado === slot.hora ? 'border-[#142942] bg-[#142942] text-white' : slot.disponible ? 'border-[#dfe4ea] hover:border-[#73889e]' : 'cursor-not-allowed border-[#eceff2] text-[#abb4be]'}`}>{slot.hora}</button>)}</div> : <p className="rounded-xl bg-[#f5f7f9] p-4 text-sm text-[#718197]">No hay horarios disponibles para esa fecha.</p>}</div>
         <div className="grid gap-4 sm:grid-cols-2"><label className="block space-y-2 text-sm font-medium">Tu nombre<input value={cliente.nombre} onChange={(e) => setCliente({ ...cliente, nombre: e.target.value })} autoComplete="name" maxLength="120" className="w-full rounded-xl border border-[#dfe4ea] px-4 py-3 outline-none focus:border-[#73889e]" required /></label><label className="block space-y-2 text-sm font-medium">Correo electrónico<input type="email" value={cliente.email} onChange={(e) => setCliente({ ...cliente, email: e.target.value })} autoComplete="email" maxLength="254" className="w-full rounded-xl border border-[#dfe4ea] px-4 py-3 outline-none focus:border-[#73889e]" required /></label></div>

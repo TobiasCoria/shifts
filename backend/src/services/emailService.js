@@ -11,7 +11,7 @@ const enviarConfirmacionEnNombreDe = async (usuario, turno, negocio, urlCancelar
     const resend = getResend();
     if (!resend || !usuario?.email) return;
     const nombreNegocio = escaparHtml(negocio || 'SHIFTS');
-    await resend.emails.send({ from: process.env.EMAIL_FROM, to: usuario.email, subject: `Turno confirmado — ${negocio || 'SHIFTS'}`, html: `<div style="font-family:Arial,sans-serif;background:#f4f6f8;color:#15263b;padding:32px"><h1>${nombreNegocio}</h1><h2>Tu turno está confirmado</h2><p>Hola ${escaparHtml(usuario.nombre)},</p><p>Reservaste ${escaparHtml(turno.servicio)} el ${escaparHtml(turno.fecha)} a las ${escaparHtml(turno.hora.slice(0, 5))}${turno.profesional ? ` con ${escaparHtml(turno.profesional)}` : ''}.</p><p>Podés cancelar según las reglas del negocio desde este enlace seguro:</p><p><a href="${escaparHtml(urlCancelar)}">Gestionar reserva</a></p><p>Cancelación disponible hasta ${Number(minutosCancelacion)} minutos antes.</p></div>` });
+    await resend.emails.send({ from: process.env.EMAIL_FROM, to: usuario.email, subject: `Turno confirmado — ${negocio || 'SHIFTS'}`, html: `<div style="font-family:Arial,sans-serif;background:#f4f6f8;color:#15263b;padding:32px"><h1>${nombreNegocio}</h1><h2>Tu turno está confirmado</h2><p>Hola ${escaparHtml(usuario.nombre)},</p><p>Reservaste ${escaparHtml(turno.servicio)} el ${escaparHtml(turno.fecha)} a las ${escaparHtml(turno.hora.slice(0, 5))}${turno.profesional ? ` con ${escaparHtml(turno.profesional)}` : ''}${turno.sucursal ? ` en ${escaparHtml(turno.sucursal)}` : ''}.</p><p>Podés cancelar según las reglas del negocio desde este enlace seguro:</p><p><a href="${escaparHtml(urlCancelar)}">Gestionar reserva</a></p><p>Cancelación disponible hasta ${Number(minutosCancelacion)} minutos antes.</p></div>` });
   } catch (err) { console.error('Error enviando email de reserva pública:', err); }
 };
 
@@ -36,6 +36,7 @@ const enviarConfirmacionTurno = async (usuario, turno) => {
             <p style="margin: 0 0 8px 0; color: rgba(255,255,255,0.4); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Detalles del turno</p>
             <p style="margin: 0; font-size: 18px; font-weight: bold;">${new Date(turno.fecha + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
           <p style="margin: 4px 0 0 0; color: #93c5fd; font-size: 16px; font-weight: bold;">${escaparHtml(turno.hora.slice(0,5))}hs · ${escaparHtml(turno.servicio || '')}</p>
+          ${turno.profesional ? `<p>Profesional: ${escaparHtml(turno.profesional)}</p>` : ''}${turno.sucursal ? `<p>Sucursal: ${escaparHtml(turno.sucursal)}</p>` : ''}
           </div>
           <p style="color: rgba(255,255,255,0.3); font-size: 12px; text-align: center;">Si necesitás cancelar tu turno, ingresá a la app.</p>
         </div>

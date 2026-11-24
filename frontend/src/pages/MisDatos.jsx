@@ -5,6 +5,7 @@ import api from '../services/api';
 
 export default function MisDatos() {
   const { usuario } = useAuth();
+  const esGimnasio = !usuario?.tipoNegocio || usuario.tipoNegocio === 'gimnasio';
   const navigate = useNavigate();
   
   const [form, setForm] = useState({ peso: '', estatura: '', fecha_nacimiento: '' });
@@ -93,17 +94,17 @@ export default function MisDatos() {
   const fotoUrl = fotoFile ? URL.createObjectURL(fotoFile) : foto ? `/api/usuarios/archivos/${encodeURIComponent(foto)}` : null;
 
   return (
-    <div className="min-h-screen bg-[#05070a] text-white">
+    <div className="min-h-screen bg-[#f4f6f8] text-[#15263b]">
       {/* Background Glows */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-600/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-sky-600/5 rounded-full blur-[100px]" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#73889e]/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-[#a9c5b4]/10 rounded-full blur-[100px]" />
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/90 border-b border-white/[0.05] px-6 py-4 flex items-center gap-4">
-        <button onClick={() => navigate('/home')} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-all">
-          <span className="opacity-50 text-xl">←</span>
+      <header className="sticky top-0 z-50 bg-white/95 border-b border-[#dfe4ea] px-6 py-4 flex items-center gap-4">
+        <button onClick={() => navigate('/home')} className="w-10 h-10 flex items-center justify-center rounded-full border border-[#dfe4ea] bg-white hover:bg-[#f5f7f9] transition-all">
+          <span className="text-xl text-[#526981]">←</span>
         </button>
         <h1 className="text-lg font-semibold tracking-tight">Mi perfil</h1>
       </header>
@@ -114,12 +115,12 @@ export default function MisDatos() {
         {/* Profile Card */}
         <section className="flex flex-col items-center text-center space-y-4 py-4 animate-fadeIn">
           <div className="relative group">
-            <div className="w-28 h-28 rounded-[2.5rem] p-1 bg-slate-200">
-              <div className="w-full h-full rounded-[2.3rem] overflow-hidden bg-[#101218] border-4 border-[#05070a]">
+            <div className="w-28 h-28 rounded-[2.5rem] p-1 bg-[#dfe4ea]">
+              <div className="w-full h-full rounded-[2.3rem] overflow-hidden bg-[#f4f6f8] border-4 border-white">
                 {fotoUrl ? (
                   <img src={fotoUrl} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-3xl font-black text-sky-500/50">
+                  <div className="w-full h-full flex items-center justify-center text-3xl font-black text-[#355a77]/60">
                     {usuario?.nombre?.charAt(0)}
                   </div>
                 )}
@@ -132,36 +133,36 @@ export default function MisDatos() {
           </div>
           <div>
             <h2 className="text-2xl font-semibold tracking-tight">{usuario?.nombre} {usuario?.apellido}</h2>
-            <p className="text-white/30 text-xs font-bold tracking-widest">{usuario?.email}</p>
+            <p className="text-[#718197] text-xs font-medium tracking-wide">{usuario?.email}</p>
           </div>
         </section>
 
-        {/* Biometrics Dashboard */}
+        {esGimnasio && <>{/* Fitness profile fields stay scoped to gym accounts. */}
         <section className="grid grid-cols-2 gap-4 animate-fadeIn">
-          <div className="bg-white/[0.03] border border-white/5 p-5 rounded-[2rem] space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-tighter text-white/20">Masa Corporal (kg)</span>
+          <div className="bg-white border border-[#dfe4ea] p-5 rounded-2xl space-y-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-[#718197]">Masa Corporal (kg)</span>
             <input 
               type="number" 
               value={form.peso} 
               onChange={e => setForm({...form, peso: e.target.value})}
-              className="bg-transparent text-2xl font-black w-full outline-none focus:text-sky-500 transition-colors"
+              className="bg-transparent text-2xl font-semibold w-full outline-none focus:text-[#355a77] transition-colors"
               placeholder="00"
             />
           </div>
-          <div className="bg-white/[0.03] border border-white/5 p-5 rounded-[2rem] space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-tighter text-white/20">Estatura (cm)</span>
+          <div className="bg-white border border-[#dfe4ea] p-5 rounded-2xl space-y-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-[#718197]">Estatura (cm)</span>
             <input 
               type="number" 
               value={form.estatura} 
               onChange={e => setForm({...form, estatura: e.target.value})}
-              className="bg-transparent text-2xl font-black w-full outline-none focus:text-sky-500 transition-colors"
+              className="bg-transparent text-2xl font-semibold w-full outline-none focus:text-[#355a77] transition-colors"
               placeholder="000"
             />
           </div>
           {imc && (
-            <div className={`col-span-2 ${status.bg} border border-white/5 p-6 rounded-[2rem] flex justify-between items-center animate-scaleIn`}>
+            <div className={`col-span-2 ${status.bg} border border-[#dfe4ea] p-6 rounded-2xl flex justify-between items-center animate-scaleIn`}>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Índice de Masa Corporal</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-[#718197]">Índice de Masa Corporal</p>
                 <p className={`text-lg font-black italic uppercase ${status.color}`}>{status.label}</p>
               </div>
               <div className="text-4xl font-black italic">{imc}</div>
@@ -170,37 +171,37 @@ export default function MisDatos() {
         </section>
 
         {/* Vital Info */}
-        <section className="bg-white/[0.03] border border-white/5 p-6 rounded-[2rem] space-y-4">
+        <section className="bg-white border border-[#dfe4ea] p-6 rounded-2xl space-y-4">
           <div className="space-y-1">
-            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Fecha de Nacimiento</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#718197] ml-2">Fecha de Nacimiento</label>
             <input 
               type="date" 
               value={form.fecha_nacimiento}
               onChange={e => setForm({...form, fecha_nacimiento: e.target.value})}
-              className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-sm font-medium outline-none focus:border-slate-400 [color-scheme:light]"
+              className="w-full bg-[#f8f9fa] border border-[#dfe4ea] rounded-xl px-5 py-4 text-sm font-medium outline-none focus:border-[#73889e] [color-scheme:light]"
             />
           </div>
         </section>
-
         {/* Routine File */}
-        <section className="bg-white/[0.03] border border-white/5 p-6 rounded-[2rem] space-y-4">
-          <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Plan de Entrenamiento</label>
+        <section className="bg-white border border-[#dfe4ea] p-6 rounded-2xl space-y-4">
+          <label className="text-[10px] font-semibold uppercase tracking-widest text-[#718197] ml-2">Plan de Entrenamiento</label>
           {archivo && (
-            <div className="bg-sky-500/10 border border-sky-500/20 p-4 rounded-2xl flex items-center justify-between">
+            <div className="bg-[#edf6f0] border border-[#c9dfd0] p-4 rounded-xl flex items-center justify-between">
               <span className="text-xs font-bold truncate max-w-[150px]">{archivo}</span>
-              <a href={`/api/usuarios/archivos/${encodeURIComponent(archivo)}`} target="_blank" rel="noreferrer" className="text-[10px] font-semibold uppercase text-sky-300 bg-white/5 px-3 py-2 rounded-lg">Ver PDF</a>
+              <a href={`/api/usuarios/archivos/${encodeURIComponent(archivo)}`} target="_blank" rel="noreferrer" className="text-[10px] font-semibold uppercase text-[#355a77] bg-white px-3 py-2 rounded-lg">Ver PDF</a>
             </div>
           )}
-          <label className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-2xl p-6 hover:bg-white/5 transition-all cursor-pointer group">
+          <label className="flex flex-col items-center justify-center border-2 border-dashed border-[#dfe4ea] rounded-xl p-6 hover:bg-[#f8f9fa] transition-all cursor-pointer group">
             <span className="text-sm mb-2 font-semibold tracking-widest group-hover:scale-105 transition-transform">PDF</span>
-            <span className="text-[10px] font-black uppercase text-white/40">{archivoFile ? archivoFile.name : 'Subir Nueva Rutina'}</span>
+            <span className="text-[10px] font-semibold uppercase text-[#718197]">{archivoFile ? archivoFile.name : 'Subir Nueva Rutina'}</span>
             <input type="file" className="hidden" onChange={e => { if(e.target.files[0]){ setArchivo(e.target.files[0].name); setArchivoFile(e.target.files[0]); }}} />
           </label>
         </section>
+        </>}
 
         {/* Security Section */}
-        <section className="bg-white/[0.03] border border-white/5 p-6 rounded-[2rem] space-y-4">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20 ml-2">Seguridad</h3>
+        <section className="bg-white border border-[#dfe4ea] p-6 rounded-2xl space-y-4">
+          <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#718197] ml-2">Seguridad</h3>
           <div className="space-y-3">
             {['actual', 'nueva', 'confirmar'].map((key) => (
               <input
@@ -209,7 +210,7 @@ export default function MisDatos() {
                 placeholder={key === 'actual' ? 'Contraseña Actual' : key === 'nueva' ? 'Nueva Contraseña' : 'Confirmar Nueva'}
                 value={contrasenas[key]}
                 onChange={e => setContrasenas({...contrasenas, [key]: e.target.value})}
-                className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-sky-500/50"
+                className="w-full bg-[#f8f9fa] border border-[#dfe4ea] rounded-xl px-5 py-4 text-sm font-medium outline-none focus:border-[#73889e]"
               />
             ))}
             {errorPass && <p className="text-[10px] font-bold text-red-400 ml-2">{errorPass}</p>}
@@ -217,7 +218,7 @@ export default function MisDatos() {
             <button 
               onClick={handleCambiarContrasena}
               disabled={!contrasenas.actual || !contrasenas.nueva || cargandoPass}
-              className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 disabled:opacity-20 transition-all"
+              className="w-full py-4 rounded-xl bg-white border border-[#dfe4ea] text-xs font-semibold uppercase tracking-widest hover:bg-[#f8f9fa] disabled:opacity-40 transition-all"
             >
               {cargandoPass ? 'Actualizando…' : 'Actualizar contraseña'}
             </button>
@@ -225,13 +226,13 @@ export default function MisDatos() {
         </section>
 
         {/* Final Save Action */}
-        <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#05070a] to-transparent pointer-events-none">
+        <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#f4f6f8] to-transparent pointer-events-none">
           <button
             onClick={handleGuardar}
             disabled={cargando}
-            className="w-full max-w-sm mx-auto pointer-events-auto bg-[#172B4D] hover:bg-[#172B4D] text-white font-medium text-sm py-4 rounded-xl shadow-sm transition-all active:scale-[0.99]"
+            className="w-full max-w-sm mx-auto pointer-events-auto bg-[#142942] hover:bg-[#233c58] text-white font-medium text-sm py-4 rounded-xl shadow-sm transition-all active:scale-[0.99]"
           >
-            {cargando ? 'Sincronizando...' : 'Guardar Datos de Atleta'}
+            {cargando ? 'Guardando…' : 'Guardar perfil'}
           </button>
         </div>
       </main>
@@ -239,7 +240,7 @@ export default function MisDatos() {
       {/* Success Toast */}
       {guardado && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-bounce">
-          <div className="bg-green-500 text-black px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl">
+          <div className="bg-[#e8f1eb] text-[#315640] border border-[#c9dfd0] px-6 py-3 rounded-full font-semibold text-xs uppercase tracking-widest shadow-lg">
             ¡Perfil Actualizado!
           </div>
         </div>
