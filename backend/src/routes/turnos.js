@@ -6,7 +6,8 @@ const {
   crearTurno, 
   cancelarTurno, 
   getDisponibilidad, 
-  marcarAsistencia 
+  marcarAsistencia,
+  getCapacidadDia
 } = require('../controllers/turnosController');
 
 const { verificarToken, soloAdmin } = require('../middlewares/auth');
@@ -22,6 +23,7 @@ router.get('/mis-turnos', verificarToken, getMisTurnos);
 
 // Disponibilidad
 router.get('/disponibilidad', verificarToken, getDisponibilidad);
+router.get('/capacidad', verificarToken, soloAdmin, getCapacidadDia);
 
 // Crear turno
 router.post('/', verificarToken, crearTurno);

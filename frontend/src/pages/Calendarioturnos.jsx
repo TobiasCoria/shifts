@@ -22,9 +22,9 @@ export default function CalendarioTurnos() {
         extendedProps: { estado: turno.estado, hora: turno.hora },
         // Colores dinámicos basados en estado
         backgroundColor: turno.estado === 'completado' ? 'rgba(34, 197, 94, 0.2)' : 
-                         turno.estado === 'cancelado' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(249, 115, 22, 0.2)',
+                         turno.estado === 'cancelado' ? 'rgba(148, 163, 184, 0.16)' : 'rgba(96, 165, 250, 0.2)',
         borderColor: turno.estado === 'completado' ? '#22c55e' : 
-                     turno.estado === 'cancelado' ? '#ef4444' : '#f97316',
+                     turno.estado === 'cancelado' ? '#94a3b8' : '#60a5fa',
       }));
       setEventos(turnosFormateados);
     } catch (err) {
@@ -36,20 +36,18 @@ export default function CalendarioTurnos() {
 
   const actualizarEstado = async (id, nuevoEstado) => {
     try {
-      const endpoint = nuevoEstado === 'cancelado' ? `/turnos/${id}/cancelar` : `/turnos/${id}/estado`;
-      const body = nuevoEstado === 'cancelado' ? {} : { estado: nuevoEstado };
-      
-      nuevoEstado === 'cancelado' ? await api.patch(endpoint) : await api.patch(endpoint, body);
+      const endpoint = `/turnos/${id}/estado`;
+      await api.patch(endpoint, { estado: nuevoEstado });
       
       setModalEvento(null);
       setRefrescar(!refrescar);
-    } catch (e) { alert("Error al actualizar"); }
+    } catch { window.alert('Error al actualizar el turno'); }
   };
 
   if (cargando) return (
     <div className="h-96 flex flex-col items-center justify-center space-y-4">
-      <div className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-      <p className="text-[10px] font-black uppercase tracking-[.3em] text-orange-500">Sincronizando Sistema</p>
+      <div className="w-10 h-10 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
+      <p className="text-[10px] font-black uppercase tracking-[.3em] text-sky-500">Sincronizando Sistema</p>
     </div>
   );
 
@@ -60,15 +58,15 @@ export default function CalendarioTurnos() {
       <div className="px-10 py-8 border-b border-white/[0.05] bg-gradient-to-b from-white/[0.02] to-transparent flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-[.4em] text-white/30">Admin Dashboard</span>
           </div>
-          <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">Gestión de <span className="text-orange-500">Turnos</span></h2>
+          <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">Gestión de <span className="text-sky-500">Turnos</span></h2>
         </div>
         
         <button 
           onClick={() => setRefrescar(!refrescar)}
-          className="bg-white text-black px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all active:scale-95"
+          className="bg-white text-black px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-sky-500 hover:text-white transition-all active:scale-95"
         >
           Refrescar Base
         </button>
@@ -82,7 +80,7 @@ export default function CalendarioTurnos() {
           .fc .fc-toolbar-title { font-size: 1.2rem !important; font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; italic; }
           .fc .fc-button-primary { background: rgba(255,255,255,0.03) !important; border: 1px solid rgba(255,255,255,0.1) !important; font-size: 0.7rem !important; font-weight: 800 !important; text-transform: uppercase !important; border-radius: 12px !important; }
           .fc .fc-button-primary:hover { background: rgba(255,255,255,0.1) !important; }
-          .fc .fc-button-active { background: #f97316 !important; border-color: #f97316 !important; color: black !important; }
+          .fc .fc-button-active { background: #334155 !important; border-color: #94a3b8 !important; color: white !important; }
           .fc-v-event { border-width: 0 0 0 4px !important; border-radius: 8px !important; padding: 4px 8px !important; margin: 2px 0 !important; }
           .fc-event-title { font-weight: 800 !important; font-size: 0.75rem !important; }
           .fc-timegrid-slot { height: 3rem !important; }
@@ -120,7 +118,7 @@ export default function CalendarioTurnos() {
           <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setModalEvento(null)} />
           <div className="relative bg-[#0d1017] border border-white/10 w-full max-w-sm rounded-[2.5rem] p-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-scaleIn">
             <div className="mb-6">
-              <span className="text-[10px] font-black uppercase tracking-[.3em] text-orange-500">Gestionar Turno</span>
+              <span className="text-[10px] font-black uppercase tracking-[.3em] text-sky-500">Gestionar Turno</span>
               <h3 className="text-2xl font-black text-white mt-1 italic uppercase">{modalEvento.title}</h3>
               <p className="text-white/40 text-xs font-bold mt-1">Horario registrado: {modalEvento.hora} hs</p>
             </div>

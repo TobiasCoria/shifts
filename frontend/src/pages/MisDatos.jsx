@@ -32,7 +32,7 @@ export default function MisDatos() {
         });
         if (data.rutina_archivo) setArchivo(data.rutina_archivo);
         if (data.foto_perfil) setFoto(data.foto_perfil);
-      } catch (e) {}
+      } catch { setError('No se pudo cargar tu perfil'); }
     };
     cargarPerfil();
   }, []);
@@ -90,14 +90,14 @@ export default function MisDatos() {
     finally { setCargandoPass(false); }
   };
 
-  const fotoUrl = fotoFile ? URL.createObjectURL(fotoFile) : foto ? `https://tcgym.onrender.com/uploads/${foto}` : null;
+  const fotoUrl = fotoFile ? URL.createObjectURL(fotoFile) : foto ? `/api/usuarios/archivos/${encodeURIComponent(foto)}` : null;
 
   return (
     <div className="min-h-screen bg-[#05070a] text-white">
       {/* Background Glows */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-600/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-orange-600/5 rounded-full blur-[100px]" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-600/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-sky-600/5 rounded-full blur-[100px]" />
       </div>
 
       {/* Header */}
@@ -109,16 +109,17 @@ export default function MisDatos() {
       </header>
 
       <main className="relative max-w-lg mx-auto px-6 pt-8 pb-32 space-y-6">
+        {error && <p role="alert" className="rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-sm text-rose-200">{error}</p>}
         
         {/* Profile Card */}
         <section className="flex flex-col items-center text-center space-y-4 py-4 animate-fadeIn">
           <div className="relative group">
-            <div className="w-28 h-28 rounded-[2.5rem] p-1 bg-gradient-to-tr from-orange-600 to-yellow-500 shadow-2xl shadow-orange-600/20">
+            <div className="w-28 h-28 rounded-[2.5rem] p-1 bg-gradient-to-tr from-sky-600 to-slate-300 shadow-2xl shadow-sky-600/20">
               <div className="w-full h-full rounded-[2.3rem] overflow-hidden bg-[#101218] border-4 border-[#05070a]">
                 {fotoUrl ? (
                   <img src={fotoUrl} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-3xl font-black text-orange-500/50">
+                  <div className="w-full h-full flex items-center justify-center text-3xl font-black text-sky-500/50">
                     {usuario?.nombre?.charAt(0)}
                   </div>
                 )}
@@ -143,7 +144,7 @@ export default function MisDatos() {
               type="number" 
               value={form.peso} 
               onChange={e => setForm({...form, peso: e.target.value})}
-              className="bg-transparent text-2xl font-black w-full outline-none focus:text-orange-500 transition-colors"
+              className="bg-transparent text-2xl font-black w-full outline-none focus:text-sky-500 transition-colors"
               placeholder="00"
             />
           </div>
@@ -153,7 +154,7 @@ export default function MisDatos() {
               type="number" 
               value={form.estatura} 
               onChange={e => setForm({...form, estatura: e.target.value})}
-              className="bg-transparent text-2xl font-black w-full outline-none focus:text-orange-500 transition-colors"
+              className="bg-transparent text-2xl font-black w-full outline-none focus:text-sky-500 transition-colors"
               placeholder="000"
             />
           </div>
@@ -176,7 +177,7 @@ export default function MisDatos() {
               type="date" 
               value={form.fecha_nacimiento}
               onChange={e => setForm({...form, fecha_nacimiento: e.target.value})}
-              className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-orange-500/50 [color-scheme:dark]"
+              className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-sky-500/50 [color-scheme:dark]"
             />
           </div>
         </section>
@@ -185,9 +186,9 @@ export default function MisDatos() {
         <section className="bg-white/[0.03] border border-white/5 p-6 rounded-[2rem] space-y-4">
           <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Plan de Entrenamiento</label>
           {archivo && (
-            <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-2xl flex items-center justify-between">
+            <div className="bg-sky-500/10 border border-sky-500/20 p-4 rounded-2xl flex items-center justify-between">
               <span className="text-xs font-bold truncate max-w-[150px]">{archivo}</span>
-              <a href={`https://tcgym.onrender.com/uploads/${archivo}`} target="_blank" className="text-[10px] font-black uppercase text-orange-500 bg-white px-3 py-2 rounded-lg">Ver PDF</a>
+              <a href={`/api/usuarios/archivos/${encodeURIComponent(archivo)}`} target="_blank" rel="noreferrer" className="text-[10px] font-semibold uppercase text-sky-300 bg-white/5 px-3 py-2 rounded-lg">Ver PDF</a>
             </div>
           )}
           <label className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-2xl p-6 hover:bg-white/5 transition-all cursor-pointer group">
@@ -208,17 +209,17 @@ export default function MisDatos() {
                 placeholder={key === 'actual' ? 'Contraseña Actual' : key === 'nueva' ? 'Nueva Contraseña' : 'Confirmar Nueva'}
                 value={contrasenas[key]}
                 onChange={e => setContrasenas({...contrasenas, [key]: e.target.value})}
-                className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-orange-500/50"
+                className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-xs font-bold outline-none focus:border-sky-500/50"
               />
             ))}
             {errorPass && <p className="text-[10px] font-bold text-red-400 ml-2">{errorPass}</p>}
             {exitoPass && <p className="text-[10px] font-bold text-green-400 ml-2">{exitoPass}</p>}
             <button 
               onClick={handleCambiarContrasena}
-              disabled={!contrasenas.actual || !contrasenas.nueva}
+              disabled={!contrasenas.actual || !contrasenas.nueva || cargandoPass}
               className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 disabled:opacity-20 transition-all"
             >
-              Actualizar Llave de Acceso
+              {cargandoPass ? 'Actualizando…' : 'Actualizar contraseña'}
             </button>
           </div>
         </section>
@@ -228,7 +229,7 @@ export default function MisDatos() {
           <button
             onClick={handleGuardar}
             disabled={cargando}
-            className="w-full max-w-sm mx-auto pointer-events-auto bg-orange-600 hover:bg-orange-500 text-white font-black uppercase text-xs tracking-[0.2em] py-5 rounded-[2rem] shadow-2xl shadow-orange-600/40 transition-all active:scale-95"
+            className="w-full max-w-sm mx-auto pointer-events-auto bg-sky-600 hover:bg-sky-500 text-white font-black uppercase text-xs tracking-[0.2em] py-5 rounded-[2rem] shadow-2xl shadow-sky-600/40 transition-all active:scale-95"
           >
             {cargando ? 'Sincronizando...' : 'Guardar Datos de Atleta'}
           </button>

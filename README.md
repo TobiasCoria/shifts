@@ -1,35 +1,36 @@
-# TCGym
+# TCGym y agenda multi negocio
 
-Aplicación de gestión de gimnasio con interfaz para socios y administración, API y persistencia MySQL. Mi aporte abarca frontend, backend y base de datos.
+Aplicación de turnos con React, Express y MySQL. El primer espacio es TCGym, y el registro permite iniciar espacios para gimnasios, consultorios, peluquerías, clases y otros servicios.
 
 [Acceso público](https://tcgym.vercel.app/)
 
-## Funcionalidades verificadas en el código
+## Funciones
 
-- Registro y acceso con autenticación JWT.
-- Consulta de disponibilidad, reservas y cancelaciones.
-- Actualización de asistencia.
-- Perfiles y vistas administrativas con validación de rol en endpoints protegidos.
-- Calendario mediante FullCalendar.
+- Acceso con cookie de sesión HttpOnly y permisos por membresía del espacio.
+- Disponibilidad, reservas transaccionales, cancelaciones con anticipación configurable y correos de confirmación/cancelación.
+- Agenda configurable por servicio, día, horario, intervalo, cupo y zona horaria.
+- Panel de administración, métricas que usan la capacidad de la agenda y calendario.
+- Perfil, rutinas PDF y fotos privadas detrás de una ruta autenticada.
+- Plantillas de inicio para gimnasio, consultorio, peluquería, clases y servicios generales.
 
-## Tecnologías y estructura
+## Estructura
 
-- `frontend/`: React, Vite, React Router y Tailwind CSS.
-- `backend/`: Node.js, Express, mysql2, JWT y bcryptjs; `server.js` como entrada.
-- MySQL para usuarios y reservas.
+- `frontend/`: React, Vite, React Router, Tailwind CSS y FullCalendar.
+- `backend/`: Node.js, Express, MySQL, JWT y bcrypt.
+- `backend/src/services/migrations.js`: prepara el esquema existente al arrancar y asocia los usuarios/turnos previos con `tcgym` sin borrar sus datos.
 
-La función `test` del backend actual es un placeholder; no se presenta como suite de pruebas aprobada.
+## Desarrollo
 
-## Desarrollo local
+Prepará una base MySQL y configurá variables privadas fuera de Git. En `backend/`, copiá `backend/.env.example` como `.env` y completá las variables locales. En `frontend/`, copiá `frontend/.env.example` como `.env` si el backend no corre en `localhost:3001`. Ejecutá `npm ci` y `npm start` en `backend/`, y `npm ci` y `npm run dev` en `frontend/`.
 
-Preparar una base MySQL y configurar variables privadas fuera de Git. Desde `frontend/`: `npm ci` y `npm run dev`. Desde `backend/`: `npm ci` y `npm start`. Comprobar primero la ubicación esperada del archivo de entorno y la configuración de URL de API del frontend. No ejecutar con credenciales de producción.
+## Despliegue
 
-Variables utilizadas por el backend: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`, `PORT`, `RESEND_API_KEY`, `EMAIL_FROM`, `CRON_SECRET`. Preparar `.env.example` sin valores reales. Configurar servicios de correo solo en un entorno autorizado.
+En Render, configura `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` y un `JWT_SECRET` nuevo. Agrega `FRONTEND_ORIGINS=https://tcgym.vercel.app`; `RESEND_API_KEY` y `EMAIL_FROM` habilitan correos. El rewrite de `/api` en `frontend/vercel.json` apunta a `https://tcgym.onrender.com`.
 
-## Estado y límites
+Render usa almacenamiento efímero por defecto. Para que rutinas y fotos persistan entre reinicios, adjuntá un disco persistente en `/var/data` y configurá `UPLOAD_DIR=/var/data/uploads`. El backend limita PDF a 10 MB e imágenes a 5 MB.
 
-La revisión verificó estructura y rutas en código y pantallas públicas. No se probó el backend completo ni se ingresó a cuentas. Antes de usar este repositorio como referencia pública, revisar el archivo `.env` versionado y sanear secretos si corresponde.
+El registro crea un espacio y su administrador; las plantillas cargan una primera agenda editable desde Administración → Configuración. Hay tablas para invitar usuarios, pero el flujo de emisión y aceptación de invitaciones todavía no está implementado.
 
-## English
+## Secretos en Git
 
-Gym management application with a React frontend, an Express API and MySQL persistence. My contribution covers frontend, backend and databases. Implemented workflows include member access, booking availability, reservations, cancellations and attendance. The public interface and source structure were reviewed; this is not a claim of a complete runtime or security audit.
+`.env` y `frontend/.env` se retiraron del índice actual. Eso no elimina las versiones históricas: si alguna vez incluyeron credenciales, rotalas en Aiven/Render/correo y saneá el historial antes de volver público el repositorio.

@@ -12,6 +12,12 @@ const RutaProtegida = ({ children }) => {
   return usuario ? children : <Navigate to="/" />;
 };
 
+const RutaAdmin = ({ children }) => {
+  const { usuario, cargando } = useAuth();
+  if (cargando) return <div className="min-h-screen bg-[#07111f] flex items-center justify-center text-white">Cargando...</div>;
+  return usuario?.rol === 'admin' ? children : <Navigate to="/home" replace />;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -21,7 +27,7 @@ function App() {
           <Route path="/home" element={<RutaProtegida><Home /></RutaProtegida>} />
           <Route path="/mis-datos" element={<RutaProtegida><MisDatos /></RutaProtegida>} />
           <Route path="/turnos" element={<RutaProtegida><Turnos /></RutaProtegida>} />
-          <Route path="/admin" element={<RutaProtegida><Admin /></RutaProtegida>} />
+          <Route path="/admin" element={<RutaAdmin><Admin /></RutaAdmin>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

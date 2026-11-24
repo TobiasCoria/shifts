@@ -1,229 +1,91 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
-const HORARIOS = [
-  '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
-  '13:00', '14:00', '15:00', '16:00', '17:00', '18:00',
-  '19:00', '20:00', '21:00'
-];
+const hoyLocal = (timeZone) => {
+  const f = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  return f;
+};
 
 export default function Turnos() {
-  const [seleccionado, setSeleccionado] = useState(null);
-  const [confirmado, setConfirmado] = useState(false);
+  const { usuario } = useAuth();
+  const [servicios, setServicios] = useState([]);
+  const [servicioId, setServicioId] = useState('');
+  const [slots, setSlots] = useState([]);
+  const [misTurnos, setMisTurnos] = useState([]);
+  const [fecha, setFecha] = useState(() => hoyLocal(usuario?.timezone || 'America/Argentina/Buenos_Aires'));
+  const [seleccionado, setSeleccionado] = useState('');
+  const [vista, setVista] = useState('reservar');
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
-  const [disponibilidad, setDisponibilidad] = useState({});
-  const [misTurnos, setMisTurnos] = useState([]);
-  const [fecha, setFecha] = useState(() => new Date().toISOString().split('T')[0]);
-  const [vista, setVista] = useState('reservar');
+  const [confirmado, setConfirmado] = useState(false);
   const navigate = useNavigate();
 
-  const fechaLegible = (f) => {
-    if (!f) return '';
-    const dateObj = new Date(f.includes('T') ? f : f + 'T00:00:00');
-    return dateObj.toLocaleDateString('es-AR', {
-      weekday: 'long', day: 'numeric', month: 'long'
-    });
-  };
+  const cargarTurnos = useCallback(async () => {
+    try { const { data } = await api.get('/turnos/mis-turnos'); setMisTurnos(data); }
+    catch (err) { setError(err.response?.data?.error || 'No se pudieron cargar tus reservas'); }
+  }, []);
 
-  useEffect(() => { cargarDisponibilidad(); }, [fecha]);
-  useEffect(() => { cargarMisTurnos(); }, []);
-
-  const cargarDisponibilidad = async () => {
+  const cargarDisponibilidad = useCallback(async () => {
     try {
-      const { data } = await api.get(`/turnos/disponibilidad?fecha=${fecha}`);
-      const mapa = {};
-      data.forEach(({ hora, ocupados }) => { mapa[hora.slice(0, 5)] = ocupados; });
-      setDisponibilidad(mapa);
-    } catch (e) {}
-  };
+      const { data } = await api.get('/turnos/disponibilidad', { params: { fecha, servicioId: servicioId || undefined } });
+      setServicios(data.servicios || []);
+      if (!servicioId && data.servicio?.id) setServicioId(String(data.servicio.id));
+      setSlots(data.slots || []);
+      setError('');
+    } catch (err) { setSlots([]); setError(err.response?.data?.error || 'No se pudo consultar la disponibilidad'); }
+  }, [fecha, servicioId]);
 
-  const cargarMisTurnos = async () => {
-    try {
-      const { data } = await api.get('/turnos/mis-turnos');
-      setMisTurnos(data);
-    } catch (e) {}
-  };
+  useEffect(() => { void cargarDisponibilidad(); }, [cargarDisponibilidad]);
+  useEffect(() => { void cargarTurnos(); }, [cargarTurnos]);
 
-  const handleReservar = async () => {
+  const reservar = async () => {
     if (!seleccionado) return;
-    setCargando(true);
-    setError('');
+    setCargando(true); setError('');
     try {
-      await api.post('/turnos', { fecha, hora: seleccionado + ':00' });
-      setConfirmado(true);
-      cargarMisTurnos();
-      setTimeout(() => { setConfirmado(false); setSeleccionado(null); }, 2500);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Error al reservar');
-    } finally { setCargando(false); }
+      await api.post('/turnos', { fecha, hora: `${seleccionado}:00`, servicioId: Number(servicioId) });
+      setConfirmado(true); setSeleccionado(''); await Promise.all([cargarDisponibilidad(), cargarTurnos()]);
+      window.setTimeout(() => setConfirmado(false), 2200);
+    } catch (err) { setError(err.response?.data?.error || 'No se pudo reservar el turno'); await cargarDisponibilidad(); }
+    finally { setCargando(false); }
   };
 
-  const handleCancelar = async (id) => {
-    try {
-      await api.patch(`/turnos/${id}/cancelar`);
-      cargarMisTurnos();
-    } catch (e) {}
+  const cancelar = async (id) => {
+    setError('');
+    try { await api.patch(`/turnos/${id}/cancelar`); await Promise.all([cargarTurnos(), cargarDisponibilidad()]); }
+    catch (err) { setError(err.response?.data?.error || 'No se pudo cancelar el turno'); }
   };
+
+  const fechaLegible = (valor) => new Date(`${String(valor).slice(0, 10)}T12:00:00`).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
-    <div className="min-h-screen bg-[#05070a] text-white selection:bg-orange-500/30">
-      
-      {/* Background Ambience */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] bg-orange-600/10 rounded-full blur-[120px]" />
-      </div>
-
-      {/* Header Pro */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#05070a]/80 border-b border-white/[0.05] px-6 py-4 flex items-center justify-between">
-        <button 
-          onClick={() => navigate('/home')}
-          className="w-10 h-10 rounded-full bg-white/[0.03] border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all"
-        >
-          <span className="opacity-60">←</span>
-        </button>
-        <h1 className="text-sm font-black uppercase tracking-[0.2em]">Agenda de Turnos</h1>
-        <div className="w-10 h-10" /> {/* Spacer */}
+    <div className="min-h-screen bg-[#07111f] text-slate-100">
+      <header className="sticky top-0 z-30 border-b border-white/10 bg-[#081423]/95 px-5 py-4 backdrop-blur md:px-10">
+        <div className="mx-auto flex max-w-5xl items-center justify-between">
+          <button onClick={() => navigate('/home')} className="rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-300 hover:bg-white/5">← Inicio</button>
+          <div className="text-right"><p className="text-sm font-semibold tracking-wide">Agenda de turnos</p><p className="text-xs text-slate-400">Elegí servicio, día y horario</p></div>
+        </div>
       </header>
-
-      {/* Navegación de Vistas (Tabs) */}
-      <div className="px-6 mt-6 max-w-lg mx-auto">
-        <div className="bg-white/[0.03] border border-white/[0.05] p-1.5 rounded-[1.5rem] flex gap-2">
-          {['reservar', 'mis-turnos'].map((v) => (
-            <button
-              key={v}
-              onClick={() => setVista(v)}
-              className={`flex-1 py-3 rounded-[1.2rem] text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
-                vista === v ? 'bg-orange-500 text-white shadow-xl shadow-orange-500/20' : 'text-white/40 hover:text-white/60'
-              }`}
-            >
-              {v === 'reservar' ? 'Nuevo Turno' : `Mis Reservas (${misTurnos.filter(t => t.estado === 'reservado').length})`}
-            </button>
-          ))}
+      <main className="mx-auto max-w-5xl space-y-6 px-5 py-8 pb-28 md:px-10">
+        <div className="flex gap-2 rounded-xl border border-white/10 bg-[#0c1a2b] p-1">
+          {['reservar', 'mis-turnos'].map((tab) => <button key={tab} onClick={() => setVista(tab)} className={`flex-1 rounded-lg px-4 py-3 text-sm font-medium transition ${vista === tab ? 'bg-sky-300 text-slate-950' : 'text-slate-400 hover:text-white'}`}>{tab === 'reservar' ? 'Reservar' : `Mis reservas (${misTurnos.filter((t) => t.estado === 'reservado').length})`}</button>)}
         </div>
-      </div>
-
-      <main className="px-6 pt-8 pb-32 max-w-lg mx-auto">
-        
-        {vista === 'reservar' && (
-          <div className="space-y-8 animate-fadeIn">
-            
-            {/* Fecha Selector */}
-            <div className="bg-white/[0.03] border border-white/10 p-6 rounded-[2rem] relative overflow-hidden group transition-all">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-              <label className="block text-[10px] font-black uppercase tracking-widest text-white/30 mb-3">Día del Entrenamiento</label>
-              <input
-                type="date"
-                value={fecha}
-                min={new Date().toISOString().split('T')[0]}
-                onChange={(e) => { setFecha(e.target.value); setSeleccionado(null); }}
-                className="w-full bg-transparent text-xl font-black focus:outline-none [color-scheme:dark] cursor-pointer"
-              />
-              <p className="text-orange-500 text-xs font-bold mt-2 capitalize italic">{fechaLegible(fecha)}</p>
-            </div>
-
-            {/* Grilla Horarios */}
-            <div className="space-y-4">
-              <h2 className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-2">Horarios Disponibles</h2>
-              <div className="grid grid-cols-3 gap-3">
-                {HORARIOS.map((hora, i) => {
-                  const ocupados = disponibilidad[hora] || 0;
-                  const lleno = ocupados >= 10;
-                  const isSel = seleccionado === hora;
-                  
-                  return (
-                    <button
-                      key={hora}
-                      onClick={() => !lleno && setSeleccionado(hora)}
-                      disabled={lleno}
-                      className={`relative group p-4 rounded-2xl border transition-all duration-300 flex flex-col items-center gap-1 ${
-                        lleno ? 'bg-white/[0.02] border-white/5 opacity-30 cursor-not-allowed' :
-                        isSel ? 'bg-orange-500 border-orange-400 scale-105 shadow-2xl shadow-orange-500/40' :
-                        'bg-white/[0.04] border-white/[0.05] hover:border-orange-500/50'
-                      }`}
-                      style={{ animationDelay: `${i * 0.02}s` }}
-                    >
-                      <span className={`text-sm font-black ${isSel ? 'text-white' : 'text-white/80'}`}>{hora}</span>
-                      <div className={`h-[3px] w-8 rounded-full ${lleno ? 'bg-red-500' : isSel ? 'bg-white/40' : 'bg-orange-500/20'}`} />
-                      <span className={`text-[9px] font-bold ${isSel ? 'text-white/70' : 'opacity-40'}`}>
-                        {lleno ? 'Full' : `${10 - ocupados} cupos`}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {vista === 'mis-turnos' && (
-          <div className="space-y-4 animate-fadeIn">
-            {misTurnos.length === 0 ? (
-              <div className="py-20 text-center opacity-20 font-black uppercase tracking-widest text-sm">Sin historial</div>
-            ) : (
-              misTurnos.map((turno, i) => (
-                <div key={turno.id} className="bg-white/[0.03] border border-white/10 rounded-[1.8rem] p-5 flex flex-col gap-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm font-black capitalize">{fechaLegible(turno.fecha)}</p>
-                      <p className="text-xs font-bold text-orange-500/70">{turno.hora.slice(0,5)} HS</p>
-                    </div>
-                    <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${
-                      turno.estado === 'reservado' ? 'bg-orange-500/10 border-orange-500/20 text-orange-400' :
-                      turno.estado === 'completado' ? 'bg-green-500/10 border-green-500/20 text-green-400' :
-                      'bg-white/5 border-white/10 text-white/30'
-                    }`}>
-                      {turno.estado}
-                    </span>
-                  </div>
-                  {turno.estado === 'reservado' && (
-                    <button
-                      onClick={() => handleCancelar(turno.id)}
-                      className="w-full py-3 rounded-xl bg-red-500/5 hover:bg-red-500/10 text-red-500/60 hover:text-red-500 text-[10px] font-black uppercase tracking-widest transition-all"
-                    >
-                      Cancelar Reserva
-                    </button>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        )}
+        {error && <div role="alert" className="rounded-xl border border-rose-300/20 bg-rose-300/10 px-4 py-3 text-sm text-rose-200">{error}</div>}
+        {vista === 'reservar' ? <>
+          <section className="grid gap-4 rounded-2xl border border-white/10 bg-[#0c1a2b] p-5 md:grid-cols-2">
+            <label className="space-y-2 text-sm text-slate-300"><span>Servicio</span><select value={servicioId} onChange={(e) => { setServicioId(e.target.value); setSeleccionado(''); }} className="w-full rounded-lg border border-white/10 bg-[#07111f] px-4 py-3 text-white">{servicios.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}</select></label>
+            <label className="space-y-2 text-sm text-slate-300"><span>Fecha</span><input type="date" value={fecha} min={hoyLocal(usuario?.timezone || 'America/Argentina/Buenos_Aires')} onChange={(e) => { setFecha(e.target.value); setSeleccionado(''); }} className="w-full rounded-lg border border-white/10 bg-[#07111f] px-4 py-3 text-white [color-scheme:dark]" /></label>
+            <div className="md:col-span-2"><p className="mb-1 font-medium capitalize">{fechaLegible(fecha)}</p><p className="text-xs text-slate-400">Los horarios y cupos dependen de la configuración del espacio.</p></div>
+          </section>
+          <section className="rounded-2xl border border-white/10 bg-[#0c1a2b] p-5">
+            <h2 className="mb-4 text-sm font-semibold text-slate-300">Horarios disponibles</h2>
+            {slots.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">{slots.map((slot) => <button key={slot.hora} disabled={!slot.disponible} onClick={() => setSeleccionado(slot.hora)} className={`rounded-xl border px-3 py-4 text-left transition ${seleccionado === slot.hora ? 'border-sky-300 bg-sky-300 text-slate-950' : slot.disponible ? 'border-white/10 bg-[#101f31] hover:border-sky-300/60' : 'cursor-not-allowed border-white/5 bg-black/20 text-slate-500'}`}><span className="block font-semibold">{slot.hora}</span><span className="mt-1 block text-xs opacity-70">{slot.disponible ? `${slot.capacidad - slot.ocupados} lugares` : 'Completo'}</span></button>)}</div> : <p className="rounded-lg bg-white/[0.03] p-5 text-sm text-slate-400">No hay horarios disponibles para este día.</p>}
+          </section>
+          <div className="sticky bottom-4 flex justify-end"><button onClick={reservar} disabled={!seleccionado || cargando} className="rounded-xl bg-sky-300 px-7 py-4 text-sm font-semibold text-slate-950 shadow-lg shadow-black/30 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40">{cargando ? 'Procesando…' : seleccionado ? `Confirmar ${seleccionado}` : 'Seleccioná un horario'}</button></div>
+        </> : <section className="space-y-3">{misTurnos.length ? misTurnos.map((turno) => <article key={turno.id} className="flex flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-[#0c1a2b] p-5 sm:flex-row sm:items-center"><div><p className="font-semibold capitalize">{fechaLegible(turno.fecha)}</p><p className="mt-1 text-sm text-slate-400">{turno.hora.slice(0, 5)} · {turno.servicio || 'Servicio'}</p></div><div className="flex items-center gap-3"><span className="rounded-full border border-slate-400/20 bg-slate-300/5 px-3 py-1 text-xs text-slate-300">{turno.estado}</span>{turno.estado === 'reservado' && <button onClick={() => cancelar(turno.id)} className="rounded-lg border border-rose-300/20 px-3 py-2 text-xs text-rose-200 hover:bg-rose-300/10">Cancelar</button>}</div></article>) : <p className="rounded-xl border border-white/10 bg-[#0c1a2b] p-8 text-center text-slate-400">Todavía no tenés reservas.</p>}</section>}
       </main>
-
-      {/* Botón Flotante Dinámico */}
-      {vista === 'reservar' && (
-        <div className="fixed bottom-0 left-0 right-0 p-6 z-40 bg-gradient-to-t from-[#05070a] via-[#05070a]/90 to-transparent">
-          <button
-            onClick={handleReservar}
-            disabled={!seleccionado || cargando}
-            className={`w-full max-w-sm mx-auto block py-5 rounded-2xl font-black text-xs uppercase tracking-[0.3em] transition-all duration-500 shadow-2xl active:scale-95 ${
-              seleccionado 
-                ? 'bg-white text-black shadow-white/10' 
-                : 'bg-white/5 text-white/20 border border-white/5 cursor-not-allowed'
-            }`}
-          >
-            {cargando ? 'Procesando...' : seleccionado ? `Confirmar ${seleccionado} hs` : 'Elige un horario'}
-          </button>
-        </div>
-      )}
-
-      {/* Modal de Confirmación Ultra-Pro */}
-      {confirmado && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-fadeIn">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-          <div className="relative bg-[#0a0c10] border border-white/10 w-full max-w-xs rounded-[3rem] p-10 text-center shadow-[0_0_50px_rgba(249,115,22,0.2)] animate-scaleIn">
-            <div className="w-20 h-20 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-orange-500/40">
-              <span className="text-white text-4xl">✓</span>
-            </div>
-            <h2 className="text-2xl font-black mb-2 italic">¡LISTO!</h2>
-            <p className="text-white/40 text-xs font-bold uppercase tracking-widest leading-relaxed">
-              Tu lugar está reservado para las <span className="text-white">{seleccionado}hs</span>. <br/>¡A darle con todo!
-            </p>
-          </div>
-        </div>
-      )}
+      {confirmado && <div role="status" className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-sky-200/20 bg-[#10243a] px-6 py-4 text-sm text-sky-100 shadow-2xl">Reserva confirmada. Te enviamos un correo.</div>}
     </div>
   );
 }

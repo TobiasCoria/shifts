@@ -2,6 +2,8 @@ const pool = require('../config/db');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const uploadDir = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../uploads'));
+fs.mkdirSync(uploadDir, { recursive: true });
 
 // ================= USUARIOS =================
 
@@ -9,10 +11,9 @@ const getUsuarios = async (req, res) => {
   try {
     const [rows] = await pool.execute(
       `SELECT 
-        id, nombre, apellido, email, documento, rol, 
-        peso, estatura, fecha_nacimiento, 
-        rutina_archivo, foto_perfil, creado_en 
-      FROM usuarios`
+        u.id, u.nombre, u.apellido, u.email, u.documento, m.rol,
+        u.creado_en
+      FROM usuarios u JOIN membresias m ON m.usuario_id = u.id AND m.organizacion_id = ? WHERE m.estado = 'activo'`, [req.usuario.organizacionId]
     );
     res.json(rows);
   } catch {
@@ -27,9 +28,9 @@ const getMiPerfil = async (req, res) => {
         id, nombre, apellido, email, documento, 
         peso, estatura, fecha_nacimiento, 
         rutina_archivo, foto_perfil
-      FROM usuarios 
-      WHERE id = ?`,
-      [req.usuario.id]
+      FROM usuarios u JOIN membresias m ON m.usuario_id = u.id
+      WHERE u.id = ? AND m.organizacion_id = ? AND m.estado = 'activo'`,
+      [req.usuario.id, req.usuario.organizacionId]
     );
     res.json(rows[0]);
   } catch {
@@ -41,8 +42,8 @@ const actualizarPerfil = async (req, res) => {
   const { peso, estatura, fecha_nacimiento } = req.body;
   try {
     await pool.execute(
-      'UPDATE usuarios SET peso = ?, estatura = ?, fecha_nacimiento = ? WHERE id = ?',
-      [peso || null, estatura || null, fecha_nacimiento || null, req.usuario.id]
+      'UPDATE usuarios SET peso = ?, estatura = ?, fecha_nacimiento = ? WHERE id = ? AND organizacion_actual_id = ?',
+      [peso || null, estatura || null, fecha_nacimiento || null, req.usuario.id, req.usuario.organizacionId]
     );
     res.json({ mensaje: 'Perfil actualizado correctamente' });
   } catch {
@@ -53,7 +54,7 @@ const actualizarPerfil = async (req, res) => {
 const eliminarUsuario = async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.execute('DELETE FROM usuarios WHERE id = ?', [id]);
+    await pool.execute('DELETE FROM membresias WHERE organizacion_id = ? AND usuario_id = ?', [req.usuario.organizacionId, id]);
     res.json({ mensaje: 'Usuario eliminado' });
   } catch {
     res.status(500).json({ error: 'Error al eliminar usuario' });
@@ -64,7 +65,7 @@ const eliminarUsuario = async (req, res) => {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads'));
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -74,10 +75,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const permitidos = ['.pdf', '.xlsx', '.xls'];
+    const permitidos = ['.pdf'];
     const ext = path.extname(file.originalname).toLowerCase();
-    if (permitidos.includes(ext)) cb(null, true);
+    if (permitidos.includes(ext) && file.mimetype === 'application/pdf') cb(null, true);
     else cb(new Error('Formato no permitido'));
   },
 });
@@ -88,10 +90,7 @@ const subirRutina = [
     if (!req.file) return res.status(400).json({ error: 'No se recibio archivo' });
 
     try {
-      await pool.execute(
-        'UPDATE usuarios SET rutina_archivo = ? WHERE id = ?',
-        [req.file.filename, req.usuario.id]
-      );
+      await pool.execute('UPDATE usuarios SET rutina_archivo = ? WHERE id = ? AND organizacion_actual_id = ?', [req.file.filename, req.usuario.id, req.usuario.organizacionId]);
 
       res.json({ archivo: req.file.filename });
     } catch {
@@ -104,7 +103,7 @@ const subirRutina = [
 
 const storageFoto = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads'));
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -114,10 +113,11 @@ const storageFoto = multer.diskStorage({
 
 const uploadFoto = multer({
   storage: storageFoto,
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const permitidos = ['.jpg', '.jpeg', '.png', '.webp'];
     const ext = path.extname(file.originalname).toLowerCase();
-    if (permitidos.includes(ext)) cb(null, true);
+    if (permitidos.includes(ext) && ['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) cb(null, true);
     else cb(new Error('Solo se permiten imágenes'));
   },
 });
@@ -130,22 +130,22 @@ const subirFoto = [
     try {
       // 🔎 buscar foto anterior
       const [rows] = await pool.execute(
-        'SELECT foto_perfil FROM usuarios WHERE id = ?',
-        [req.usuario.id]
+        'SELECT foto_perfil FROM usuarios WHERE id = ? AND organizacion_actual_id = ?',
+        [req.usuario.id, req.usuario.organizacionId]
       );
 
       const fotoAnterior = rows[0]?.foto_perfil;
 
       // 🗑️ borrar foto anterior
       if (fotoAnterior) {
-        const ruta = path.join(__dirname, '../uploads', fotoAnterior);
+        const ruta = path.join(uploadDir, path.basename(fotoAnterior));
         fs.unlink(ruta, () => {}); // silencioso
       }
 
       // 💾 guardar nueva
       await pool.execute(
-        'UPDATE usuarios SET foto_perfil = ? WHERE id = ?',
-        [req.file.filename, req.usuario.id]
+        'UPDATE usuarios SET foto_perfil = ? WHERE id = ? AND organizacion_actual_id = ?',
+        [req.file.filename, req.usuario.id, req.usuario.organizacionId]
       );
 
       res.json({ foto: req.file.filename });
@@ -176,4 +176,16 @@ const cambiarContrasena = async (req, res) => {
   }
 };
 
-module.exports = { getUsuarios, getMiPerfil, actualizarPerfil, eliminarUsuario, subirRutina, subirFoto, cambiarContrasena };
+const verArchivo = async (req, res) => {
+  const nombre = path.basename(req.params.filename);
+  try {
+    const [rows] = await pool.execute('SELECT u.foto_perfil, u.rutina_archivo FROM usuarios u JOIN membresias m ON m.usuario_id = u.id WHERE u.id = ? AND m.organizacion_id = ? AND m.estado = \'activo\'', [req.usuario.id, req.usuario.organizacionId]);
+    if (!rows.length || ![rows[0].foto_perfil, rows[0].rutina_archivo].includes(nombre)) return res.status(404).json({ error: 'Archivo no encontrado' });
+    const ruta = path.join(uploadDir, nombre);
+    if (!ruta.startsWith(`${uploadDir}${path.sep}`)) return res.status(404).end();
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.sendFile(ruta, (err) => { if (err && !res.headersSent) res.status(err.statusCode === 404 ? 404 : 500).end(); });
+  } catch { res.status(500).json({ error: 'No se pudo abrir el archivo' }); }
+};
+
+module.exports = { getUsuarios, getMiPerfil, actualizarPerfil, eliminarUsuario, subirRutina, subirFoto, cambiarContrasena, verArchivo };

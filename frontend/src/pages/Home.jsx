@@ -17,7 +17,7 @@ export default function Home() {
       try {
         if (esAdmin) {
           const [u, t] = await Promise.all([api.get('/usuarios'), api.get('/turnos')]);
-          const hoy = new Date().toISOString().split('T')[0];
+          const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: usuario?.timezone || 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
           const turnosHoy = t.data.filter(t => t.fecha?.split('T')[0] === hoy);
           setStats({
             usuarios: u.data.length,
@@ -27,7 +27,7 @@ export default function Home() {
           });
         } else {
           const { data } = await api.get('/turnos/mis-turnos');
-          const hoy = new Date().toISOString().split('T')[0];
+          const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: usuario?.timezone || 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
           const proximo = data.find(t => t.estado === 'reservado' && t.fecha?.split('T')[0] >= hoy);
           setProximoTurno(proximo || null);
         }
@@ -36,15 +36,15 @@ export default function Home() {
       }
     };
     cargar();
-  }, [esAdmin]);
+  }, [esAdmin, usuario?.timezone]);
 
   return (
-    <div className={`min-h-screen text-white selection:bg-orange-500/30 ${esAdmin ? 'bg-[#05080d]' : 'bg-[#05070f]'}`}>
+    <div className={`min-h-screen text-white selection:bg-sky-500/30 ${esAdmin ? 'bg-[#05080d]' : 'bg-[#05070f]'}`}>
       
       {/* Luces Ambientales (Glows) */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className={`absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-20 ${esAdmin ? 'bg-blue-600' : 'bg-orange-600'}`} />
-        <div className={`absolute bottom-[5%] -right-[5%] w-[30%] h-[30%] rounded-full blur-[100px] opacity-10 ${esAdmin ? 'bg-blue-400' : 'bg-orange-400'}`} />
+        <div className={`absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-20 ${esAdmin ? 'bg-blue-600' : 'bg-sky-600'}`} />
+        <div className={`absolute bottom-[5%] -right-[5%] w-[30%] h-[30%] rounded-full blur-[100px] opacity-10 ${esAdmin ? 'bg-blue-400' : 'bg-sky-400'}`} />
       </div>
 
       {/* Navbar Minimalista */}
@@ -60,14 +60,14 @@ export default function Home() {
         </button>
 
         <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
-          <span className="font-black text-lg tracking-tighter italic">TCGYM</span>
-          <div className={`h-[2px] w-full rounded-full ${esAdmin ? 'bg-blue-500' : 'bg-orange-500'}`} />
+          <span className="font-semibold text-lg tracking-wide">{usuario?.organizacion || 'Agenda'}</span>
+          <div className={`h-[2px] w-full rounded-full ${esAdmin ? 'bg-blue-500' : 'bg-sky-500'}`} />
         </div>
 
         <button 
           onClick={() => navigate(esAdmin ? '/admin' : '/mis-datos')}
           className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold text-sm transition-all shadow-xl active:scale-95 ${
-            esAdmin ? 'border-blue-500/30 bg-blue-500/10 text-blue-400' : 'border-orange-500/30 bg-orange-500/10 text-orange-400'
+            esAdmin ? 'border-blue-500/30 bg-blue-500/10 text-blue-400' : 'border-sky-500/30 bg-sky-500/10 text-sky-400'
           }`}
         >
           {usuario?.nombre?.charAt(0).toUpperCase()}
@@ -82,13 +82,13 @@ export default function Home() {
           <div className={`p-8 rounded-[2rem] border relative overflow-hidden group transition-all duration-500 ${
             esAdmin ? 'bg-blue-900/10 border-blue-500/20' : 'bg-white/[0.03] border-white/10'
           }`}>
-            <div className={`absolute top-0 right-0 w-48 h-48 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2 transition-opacity duration-500 opacity-30 group-hover:opacity-50 ${esAdmin ? 'bg-blue-600' : 'bg-orange-600'}`} />
+            <div className={`absolute top-0 right-0 w-48 h-48 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2 transition-opacity duration-500 opacity-30 group-hover:opacity-50 ${esAdmin ? 'bg-blue-600' : 'bg-sky-600'}`} />
             
             <div className="relative z-10">
               <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 ${
-                esAdmin ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
+                esAdmin ? 'bg-blue-500/20 text-blue-400' : 'bg-sky-500/20 text-sky-400'
               }`}>
-                {esAdmin ? 'Dashboard Administrativo' : 'Socio Premium'}
+                {esAdmin ? 'Administración' : 'Cuenta del espacio'}
               </span>
               <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-2">
                 Hola, {usuario?.nombre} <span className="inline-block animate-float">{esAdmin ? '⚡' : '🔥'}</span>
@@ -124,7 +124,7 @@ export default function Home() {
           <button
             onClick={() => navigate(esAdmin ? '/admin' : '/turnos')}
             className={`group relative overflow-hidden p-6 rounded-[1.8rem] transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] md:col-span-2 flex items-center justify-between shadow-2xl ${
-              esAdmin ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/40' : 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/40'
+              esAdmin ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/40' : 'bg-sky-500 hover:bg-sky-600 shadow-sky-500/40'
             }`}
           >
             <div className="text-left">
@@ -178,7 +178,7 @@ export default function Home() {
           }`}>
             <div className="p-8 border-b border-white/5">
               <div className={`w-16 h-16 rounded-[1.3rem] flex items-center justify-center text-2xl font-black mb-4 shadow-2xl ${
-                esAdmin ? 'bg-blue-600 shadow-blue-600/30' : 'bg-orange-500 shadow-orange-500/30'
+                esAdmin ? 'bg-blue-600 shadow-blue-600/30' : 'bg-sky-500 shadow-sky-500/30'
               }`}>
                 {usuario?.nombre?.charAt(0).toUpperCase()}
               </div>

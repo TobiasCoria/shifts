@@ -1,5 +1,7 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
+
+/* eslint-disable react-refresh/only-export-components */
 
 const AuthContext = createContext();
 
@@ -7,43 +9,30 @@ export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = useState(null);
   const [cargando, setCargando] = useState(true);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const usuarioGuardado = localStorage.getItem('usuario');
-    if (token && usuarioGuardado) {
-      try {
-        setUsuario(JSON.parse(usuarioGuardado));
-      } catch {
-        localStorage.removeItem('token');
-        localStorage.removeItem('usuario');
-      }
-    }
-    setCargando(false);
+  const refrescarSesion = useCallback(async () => {
+    try {
+      const { data } = await api.get('/auth/me');
+      setUsuario(data.usuario);
+      return data.usuario;
+    } catch {
+      setUsuario(null);
+      return null;
+    } finally { setCargando(false); }
   }, []);
 
-  const login = (token, usuarioData) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('usuario', JSON.stringify(usuarioData));
-    setUsuario(usuarioData);
-  };
-
-  const logout = () => {
+  useEffect(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
-    setUsuario(null);
-  };
+    void refrescarSesion();
+  }, [refrescarSesion]);
 
-  const actualizarUsuario = (datos) => {
-    const actualizado = { ...usuario, ...datos };
-    localStorage.setItem('usuario', JSON.stringify(actualizado));
-    setUsuario(actualizado);
+  const login = (usuarioData) => setUsuario(usuarioData);
+  const logout = async () => {
+    try { await api.post('/auth/logout'); } finally { setUsuario(null); }
   };
+  const actualizarUsuario = (datos) => setUsuario((actual) => ({ ...actual, ...datos }));
 
-  return (
-    <AuthContext.Provider value={{ usuario, login, logout, cargando, actualizarUsuario }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ usuario, login, logout, cargando, actualizarUsuario, refrescarSesion }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);

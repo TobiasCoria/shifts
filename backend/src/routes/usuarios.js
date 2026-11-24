@@ -8,13 +8,15 @@ const {
   eliminarUsuario, 
   subirRutina, 
   subirFoto,
-  cambiarContrasena
+  cambiarContrasena,
+  verArchivo
 } = require('../controllers/usuariosController');
 
 const { verificarToken, soloAdmin } = require('../middlewares/auth');
 
 // Cambiar contraseña
 router.put('/contrasena', verificarToken, cambiarContrasena);
+router.get('/archivos/:filename', verificarToken, verArchivo);
 
 // Subir foto de perfil
 router.post('/foto', verificarToken, subirFoto);
