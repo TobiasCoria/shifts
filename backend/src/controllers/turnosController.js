@@ -6,7 +6,7 @@ const getTurnos = async (req, res) => {
   try {
     const [rows] = await pool.execute(
       `SELECT t.*, u.nombre, u.apellido, s.nombre AS servicio,
-       COALESCE((SELECT h.capacidad FROM horarios h WHERE h.organizacion_id = t.organizacion_id AND h.servicio_id = t.servicio_id AND h.dia_semana = WEEKDAY(t.fecha) AND TIME(t.hora) >= h.hora_inicio AND TIME(t.hora) < h.hora_fin ORDER BY h.id LIMIT 1), s.capacidad) AS capacidad
+       COALESCE((SELECT h.capacidad FROM agenda_horarios h WHERE h.organizacion_id = t.organizacion_id AND h.servicio_id = t.servicio_id AND h.dia_semana = WEEKDAY(t.fecha) AND TIME(t.hora) >= h.hora_inicio AND TIME(t.hora) < h.hora_fin ORDER BY h.id LIMIT 1), s.capacidad) AS capacidad
        FROM turnos t JOIN usuarios u ON t.usuario_id = u.id
        LEFT JOIN servicios s ON s.id = t.servicio_id
        WHERE t.organizacion_id = ? ORDER BY t.fecha, t.hora`,
@@ -51,7 +51,7 @@ const crearTurno = async (req, res) => {
     if (!servicio || !servicio.activo) { await connection.rollback(); return res.status(400).json({ error: 'El servicio no está disponible' }); }
     const [horarios] = await connection.execute(
       `SELECT id, hora_inicio, hora_fin, intervalo_minutos, capacidad
-       FROM horarios WHERE organizacion_id = ? AND servicio_id = ? AND dia_semana = WEEKDAY(?) AND activo = 1`,
+       FROM agenda_horarios WHERE organizacion_id = ? AND servicio_id = ? AND dia_semana = WEEKDAY(?) AND activo = 1`,
       [organizationId, idServicio, fecha]
     );
     const minuto = horaEnMinutos(horaSql);
@@ -122,7 +122,7 @@ const getDisponibilidad = async (req, res) => {
     if (!servicio) return res.status(404).json({ error: 'No hay servicios disponibles' });
     const [horarios] = await pool.execute(
       `SELECT TIME_FORMAT(hora_inicio, '%H:%i') AS hora_inicio, TIME_FORMAT(hora_fin, '%H:%i') AS hora_fin,
-       intervalo_minutos, capacidad FROM horarios WHERE organizacion_id = ? AND servicio_id = ? AND dia_semana = WEEKDAY(?) AND activo = 1 ORDER BY hora_inicio`,
+       intervalo_minutos, capacidad FROM agenda_horarios WHERE organizacion_id = ? AND servicio_id = ? AND dia_semana = WEEKDAY(?) AND activo = 1 ORDER BY hora_inicio`,
       [organizationId, idServicio, fecha]
     );
     const [ocupados] = await pool.execute(
@@ -161,7 +161,7 @@ const getCapacidadDia = async (req, res) => {
   try {
     const [rows] = await pool.execute(
       `SELECT COALESCE(SUM(CEIL(TIMESTAMPDIFF(MINUTE, h.hora_inicio, h.hora_fin) / h.intervalo_minutos) * COALESCE(h.capacidad, s.capacidad)), 0) AS capacidad
-       FROM horarios h JOIN servicios s ON s.id = h.servicio_id
+       FROM agenda_horarios h JOIN servicios s ON s.id = h.servicio_id
        WHERE h.organizacion_id = ? AND s.activo = 1 AND h.activo = 1 AND h.dia_semana = WEEKDAY(?)`,
       [req.usuario.organizacionId, fecha]
     );

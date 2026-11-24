@@ -61,7 +61,7 @@ const registro = async (req, res) => {
     }[tipoNegocio];
     for (const plantilla of plantillas) {
       const [servicio] = await connection.execute('INSERT INTO servicios (organizacion_id, nombre, duracion_minutos, capacidad, activo) VALUES (?, ?, ?, ?, TRUE)', [orgId, plantilla.nombre, plantilla.duracion, plantilla.capacidad]);
-      for (const dia of plantilla.dias) await connection.execute('INSERT INTO horarios (organizacion_id, servicio_id, dia_semana, hora_inicio, hora_fin, intervalo_minutos, capacidad, activo) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)', [orgId, servicio.insertId, dia, `${plantilla.inicio}:00`, `${plantilla.fin}:00`, plantilla.duracion, plantilla.capacidad]);
+      for (const dia of plantilla.dias) await connection.execute('INSERT INTO agenda_horarios (organizacion_id, servicio_id, dia_semana, hora_inicio, hora_fin, intervalo_minutos, capacidad, activo) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)', [orgId, servicio.insertId, dia, `${plantilla.inicio}:00`, `${plantilla.fin}:00`, plantilla.duracion, plantilla.capacidad]);
     }
     await connection.commit();
     res.status(201).json({ mensaje: 'Espacio creado. Ya podés iniciar sesión.' });
