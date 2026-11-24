@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -9,6 +9,21 @@ const rubros = [
   ['consultorio', 'Consultorio'], ['tatuajes', 'Estudio de tatuajes'], ['clases', 'Academia / Clases'], ['general', 'Otro negocio'],
 ];
 const vacio = { nombre: '', apellido: '', email: '', documento: '', contrasena: '', confirmar: '', negocio: '', tipoNegocio: 'gimnasio', zonaHoraria: 'America/Argentina/Buenos_Aires', espacio: '' };
+
+function CampoContrasena({ label, value, onChange, autoComplete, minLength, placeholder }) {
+  const [visible, setVisible] = useState(false);
+  const id = useId();
+  return <div className="auth-password-field">
+    <label className="auth-label" htmlFor={id}>{label}</label>
+    <div className="auth-password-wrap">
+      <input id={id} className="auth-input auth-password-input" type={visible ? 'text' : 'password'} autoComplete={autoComplete} minLength={minLength} placeholder={placeholder} value={value} onChange={(event) => onChange(event.target.value)} required />
+      <button type="button" className="auth-password-toggle" onClick={() => setVisible((actual) => !actual)} aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'} aria-pressed={visible}>
+        {visible ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8"/><path d="M9.9 5.2A10.7 10.7 0 0112 5c5.5 0 9 5.2 9 7a9 9 0 01-2.1 3.1M6.2 6.2C3.7 7.8 2 10.5 2 12c0 1.8 3.5 7 10 7 1 0 2-.2 2.9-.5"/></svg> : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="2.5"/></svg>}
+        <span>{visible ? 'Ocultar' : 'Mostrar'}</span>
+      </button>
+    </div>
+  </div>;
+}
 
 function obtenerSlug(valor) {
   const input = valor.trim();
@@ -61,18 +76,20 @@ export default function Login() {
     finally { setCargando(false); }
   };
 
-  const titulo = vista === 'registro-espacio' ? 'Tu negocio, mejor organizado.' : vista === 'registro-cliente' ? 'Tu agenda empieza acá.' : 'Todo tu día, en orden.';
+  const titulo = vista === 'registro-espacio' ? 'Tu negocio, mejor organizado.' : vista === 'registro-cliente' ? 'Tu agenda empieza acá.' : vista === 'elegir' ? 'Una cuenta para cada necesidad.' : 'Todo tu día, en orden.';
   const descripcion = vista === 'registro-espacio'
     ? 'Creá un espacio de trabajo para tu local y configurá tus servicios, equipo y reservas.'
     : vista === 'registro-cliente'
       ? 'Creá una cuenta para reservar y consultar tus turnos en el local que te invitó.'
-      : 'Reservas, equipo y operación en una experiencia clara para vos y tus clientes.';
+      : vista === 'elegir'
+        ? 'Administrá tu local o creá una cuenta para reservar en el espacio que te compartieron.'
+        : 'Reservas, equipo y operación en una experiencia clara para vos y tus clientes.';
 
   return <main className={`auth-page auth-view-${vista}`}>
     <div className="auth-shell">
       <aside className="auth-side">
         <div className="auth-side-top"><Brand light /></div>
-        <div className="auth-side-message">
+        <div className="auth-side-message" key={vista}>
           <span className="auth-eyebrow">Una plataforma. Tu forma de trabajar.</span>
           <h1>{vista === 'login' ? <>Todo tu día,<br />en orden.</> : titulo}</h1>
           <p>{descripcion}</p>
@@ -87,7 +104,7 @@ export default function Login() {
 
       <section className="auth-main">
         <div className="auth-mobile-brand"><Brand /></div>
-        <div className="auth-content">
+        <div className="auth-content" key={vista}>
           <div className="auth-heading">
             <span className="auth-kicker">{vista === 'login' ? 'TU ESPACIO SHIFTS' : vista === 'registro-cliente' ? 'CUENTA DE CLIENTE' : vista === 'registro-espacio' ? 'NUEVO ESPACIO' : 'EMPEZAR'}</span>
             <h2>{vista === 'login' ? 'Qué bueno verte.' : vista === 'elegir' ? '¿Cómo querés usar SHIFTS?' : vista === 'registro-cliente' ? 'Creá tu cuenta' : vista === 'registro-espacio' ? 'Creá tu espacio' : 'Elegí cómo empezar'}</h2>
@@ -97,15 +114,15 @@ export default function Login() {
           {vista === 'login' && <form onSubmit={handleLogin} className="auth-form">
             <div className="auth-mode" role="group" aria-label="Método de acceso">{[['email', 'Correo electrónico'], ['documento', 'Documento']].map(([key, label]) => <button type="button" key={key} onClick={() => setModo(key)} className={modo === key ? 'is-active' : ''}>{label}</button>)}</div>
             <label className="auth-label">{modo === 'email' ? 'Correo electrónico' : 'Documento'}<input className="auth-input" type={modo === 'email' ? 'email' : 'text'} autoComplete={modo === 'email' ? 'email' : 'off'} placeholder={modo === 'email' ? 'nombre@correo.com' : 'DNI o CI'} value={modo === 'email' ? form.email : form.documento} onChange={(event) => cambiar(modo, event.target.value)} required /></label>
-            <label className="auth-label">Contraseña<input className="auth-input" type="password" autoComplete="current-password" placeholder="Tu contraseña" value={form.contrasena} onChange={(event) => cambiar('contrasena', event.target.value)} required /></label>
+            <CampoContrasena label="Contraseña" autoComplete="current-password" placeholder="Tu contraseña" value={form.contrasena} onChange={(value) => cambiar('contrasena', value)} />
             {error && <p role="alert" className="auth-alert auth-error">{error}</p>}{exito && <p role="status" className="auth-alert auth-success">{exito}</p>}
-            <button disabled={cargando} className="auth-submit">{cargando ? 'Ingresando…' : 'Iniciar sesión'}<span aria-hidden="true">→</span></button>
+            <button disabled={cargando} className="auth-submit"><span className="auth-submit-copy">{cargando && <i className="auth-spinner" aria-hidden="true" />}{cargando ? 'Ingresando…' : 'Iniciar sesión'}</span><span className="auth-submit-arrow" aria-hidden="true">→</span></button>
             <p className="auth-switch">¿Todavía no usás SHIFTS? <button type="button" onClick={() => cambiarVista('elegir')}>Elegí cómo empezar</button></p>
           </form>}
 
           {vista === 'elegir' && <div className="auth-choice-list">
-            <button className="auth-choice" type="button" onClick={() => cambiarVista('registro-espacio')}><span className="auth-choice-icon">↗</span><span><strong>Crear espacio para mi local</strong><small>Para propietarios y administradores que quieren gestionar un negocio.</small></span><b aria-hidden="true">→</b></button>
-            <button className="auth-choice" type="button" onClick={() => cambiarVista('registro-cliente')}><span className="auth-choice-icon auth-choice-icon-light">＋</span><span><strong>Crear cuenta para usar un local</strong><small>Para clientes que recibieron un enlace de reservas o invitación.</small></span><b aria-hidden="true">→</b></button>
+            <button className="auth-choice" type="button" onClick={() => cambiarVista('registro-espacio')}><span className="auth-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V6.5L12 3l8 3.5V20M2.5 20h19M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01M10 20v-4h4v4"/></svg></span><span><strong>Crear espacio para mi local</strong><small>Para propietarios y administradores que quieren gestionar un negocio.</small></span><b aria-hidden="true">→</b></button>
+            <button className="auth-choice" type="button" onClick={() => cambiarVista('registro-cliente')}><span className="auth-choice-icon auth-choice-icon-light"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20v-1.5A5.5 5.5 0 018 13h2a5.5 5.5 0 015.5 5.5V20M19 8v7M15.5 11.5h7"/></svg></span><span><strong>Crear cuenta para usar un local</strong><small>Para clientes que recibieron un enlace de reservas o invitación.</small></span><b aria-hidden="true">→</b></button>
             <p className="auth-switch"><button type="button" onClick={() => cambiarVista('login')}>Volver a iniciar sesión</button></p>
           </div>}
 
@@ -118,9 +135,9 @@ export default function Login() {
               <label className="auth-label">Nombre del local<input className="auth-input" autoComplete="organization" placeholder="Ej.: Estudio Norte" value={form.negocio} onChange={(e) => cambiar('negocio', e.target.value)} required /></label>
               <div className="auth-fields-two"><label className="auth-label">Rubro<select className="auth-input" value={form.tipoNegocio} onChange={(e) => cambiar('tipoNegocio', e.target.value)}>{rubros.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label><label className="auth-label">Zona horaria<select className="auth-input" value={form.zonaHoraria} onChange={(e) => cambiar('zonaHoraria', e.target.value)}><option value="America/Argentina/Buenos_Aires">Argentina</option><option value="America/Santiago">Chile</option><option value="America/Montevideo">Uruguay</option><option value="America/Mexico_City">México</option><option value="Europe/Madrid">España</option><option value="UTC">UTC</option></select></label></div>
             </> : null}
-            <div className="auth-fields-two"><label className="auth-label">Contraseña<input className="auth-input" type="password" autoComplete="new-password" minLength="10" placeholder="Mínimo 10 caracteres" value={form.contrasena} onChange={(e) => cambiar('contrasena', e.target.value)} required /></label><label className="auth-label">Confirmá la contraseña<input className="auth-input" type="password" autoComplete="new-password" placeholder="Repetí la contraseña" value={form.confirmar} onChange={(e) => cambiar('confirmar', e.target.value)} required /></label></div>
+            <div className="auth-fields-two"><CampoContrasena label="Contraseña" autoComplete="new-password" minLength="10" placeholder="Mínimo 10 caracteres" value={form.contrasena} onChange={(value) => cambiar('contrasena', value)} /><CampoContrasena label="Confirmá la contraseña" autoComplete="new-password" placeholder="Repetí la contraseña" value={form.confirmar} onChange={(value) => cambiar('confirmar', value)} /></div>
             {error && <p role="alert" className="auth-alert auth-error">{error}</p>}{exito && <p role="status" className="auth-alert auth-success">{exito}</p>}
-            <button disabled={cargando} className="auth-submit">{cargando ? 'Creando…' : vista === 'registro-espacio' ? 'Crear espacio de negocio' : 'Crear cuenta de cliente'}<span aria-hidden="true">→</span></button>
+            <button disabled={cargando} className="auth-submit"><span className="auth-submit-copy">{cargando && <i className="auth-spinner" aria-hidden="true" />}{cargando ? 'Creando…' : vista === 'registro-espacio' ? 'Crear espacio de negocio' : 'Crear cuenta de cliente'}</span><span className="auth-submit-arrow" aria-hidden="true">→</span></button>
             <p className="auth-switch">¿Ya tenés cuenta? <button type="button" onClick={() => cambiarVista('login')}>Iniciar sesión</button></p>
           </form>}
         </div>
