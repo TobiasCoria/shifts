@@ -1,7 +1,8 @@
 # Backend
 backend/node_modules
-backend/.env*
+backend/**/.env*
 !backend/.env.example
+!backend/**/.env.example
 backend/src/uploads/*
 !backend/src/uploads/.gitkeep
 

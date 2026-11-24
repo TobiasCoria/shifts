@@ -10,13 +10,13 @@ import GestionReserva from './pages/GestionReserva';
 
 const RutaProtegida = ({ children }) => {
   const { usuario, cargando } = useAuth();
-  if (cargando) return <div className="min-h-screen bg-gray-900 flex items-center justify-center"><span className="text-white text-xl">Cargando...</span></div>;
+  if (cargando) return <div className="min-h-screen bg-[#f7f6f2] flex items-center justify-center"><span className="text-slate-600 text-sm">Cargando tu espacio…</span></div>;
   return usuario ? children : <Navigate to="/" />;
 };
 
 const RutaAdmin = ({ children }) => {
   const { usuario, cargando } = useAuth();
-  if (cargando) return <div className="min-h-screen bg-[#07111f] flex items-center justify-center text-white">Cargando...</div>;
+  if (cargando) return <div className="min-h-screen bg-[#f7f6f2] flex items-center justify-center text-slate-600 text-sm">Cargando tu espacio…</div>;
   return usuario?.rol === 'admin' ? children : <Navigate to="/home" replace />;
 };
 

@@ -157,12 +157,12 @@ export default function Home() {
 
             <nav className="flex-1 px-4 py-6 space-y-2">
               {(esAdmin ? [
-                { label: 'Inicio', icon: '🏠', path: '/home' },
-                { label: 'Gestión Admin', icon: '⚙️', path: '/admin' },
+                { label: 'Inicio', icon: '01', path: '/home' },
+                { label: 'Gestión del negocio', icon: '02', path: '/admin' },
               ] : [
-                { label: 'Inicio', icon: '🏠', path: '/home' },
-                { label: 'Reservar Turno', icon: '📅', path: '/turnos' },
-                { label: 'Mi Perfil', icon: '👤', path: '/mis-datos' },
+                { label: 'Inicio', icon: '01', path: '/home' },
+                { label: 'Reservar turno', icon: '02', path: '/turnos' },
+                { label: 'Mi perfil', icon: '03', path: '/mis-datos' },
               ]).map((item) => (
                 <button 
                   key={item.path} 
@@ -180,7 +180,7 @@ export default function Home() {
                 onClick={() => { logout(); navigate('/'); }} 
                 className="w-full flex items-center justify-center gap-3 rounded-xl border border-[#dfe4ea] px-4 py-3 text-sm font-medium text-[#526981] transition hover:bg-[#f4f6f8]"
               >
-                Cerrar Sesión 🚪
+                Cerrar sesión
               </button>
             </div>
           </aside>

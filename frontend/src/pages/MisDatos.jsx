@@ -101,11 +101,11 @@ export default function MisDatos() {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#05070a]/80 border-b border-white/[0.05] px-6 py-4 flex items-center gap-4">
+      <header className="sticky top-0 z-50 bg-white/90 border-b border-white/[0.05] px-6 py-4 flex items-center gap-4">
         <button onClick={() => navigate('/home')} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-all">
           <span className="opacity-50 text-xl">←</span>
         </button>
-        <h1 className="text-sm font-black uppercase tracking-widest">Mi Perfil Técnico</h1>
+        <h1 className="text-lg font-semibold tracking-tight">Mi perfil</h1>
       </header>
 
       <main className="relative max-w-lg mx-auto px-6 pt-8 pb-32 space-y-6">
@@ -114,7 +114,7 @@ export default function MisDatos() {
         {/* Profile Card */}
         <section className="flex flex-col items-center text-center space-y-4 py-4 animate-fadeIn">
           <div className="relative group">
-            <div className="w-28 h-28 rounded-[2.5rem] p-1 bg-gradient-to-tr from-sky-600 to-slate-300 shadow-2xl shadow-sky-600/20">
+            <div className="w-28 h-28 rounded-[2.5rem] p-1 bg-slate-200">
               <div className="w-full h-full rounded-[2.3rem] overflow-hidden bg-[#101218] border-4 border-[#05070a]">
                 {fotoUrl ? (
                   <img src={fotoUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -126,12 +126,12 @@ export default function MisDatos() {
               </div>
             </div>
             <label className="absolute bottom-0 right-0 w-10 h-10 bg-white text-black rounded-2xl flex items-center justify-center shadow-xl cursor-pointer hover:scale-110 transition-transform">
-              <span className="text-lg">📸</span>
+              <span className="text-lg" aria-hidden="true">+</span>
               <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && setFotoFile(e.target.files[0])} />
             </label>
           </div>
           <div>
-            <h2 className="text-2xl font-black italic uppercase tracking-tight">{usuario?.nombre} {usuario?.apellido}</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">{usuario?.nombre} {usuario?.apellido}</h2>
             <p className="text-white/30 text-xs font-bold tracking-widest">{usuario?.email}</p>
           </div>
         </section>
@@ -177,7 +177,7 @@ export default function MisDatos() {
               type="date" 
               value={form.fecha_nacimiento}
               onChange={e => setForm({...form, fecha_nacimiento: e.target.value})}
-              className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:border-sky-500/50 [color-scheme:dark]"
+              className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-sm font-medium outline-none focus:border-slate-400 [color-scheme:light]"
             />
           </div>
         </section>
@@ -192,7 +192,7 @@ export default function MisDatos() {
             </div>
           )}
           <label className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-2xl p-6 hover:bg-white/5 transition-all cursor-pointer group">
-            <span className="text-2xl mb-2 group-hover:scale-125 transition-transform">📄</span>
+            <span className="text-sm mb-2 font-semibold tracking-widest group-hover:scale-105 transition-transform">PDF</span>
             <span className="text-[10px] font-black uppercase text-white/40">{archivoFile ? archivoFile.name : 'Subir Nueva Rutina'}</span>
             <input type="file" className="hidden" onChange={e => { if(e.target.files[0]){ setArchivo(e.target.files[0].name); setArchivoFile(e.target.files[0]); }}} />
           </label>
@@ -229,7 +229,7 @@ export default function MisDatos() {
           <button
             onClick={handleGuardar}
             disabled={cargando}
-            className="w-full max-w-sm mx-auto pointer-events-auto bg-sky-600 hover:bg-sky-500 text-white font-black uppercase text-xs tracking-[0.2em] py-5 rounded-[2rem] shadow-2xl shadow-sky-600/40 transition-all active:scale-95"
+            className="w-full max-w-sm mx-auto pointer-events-auto bg-[#24231f] hover:bg-black text-white font-medium text-sm py-4 rounded-xl shadow-sm transition-all active:scale-[0.99]"
           >
             {cargando ? 'Sincronizando...' : 'Guardar Datos de Atleta'}
           </button>

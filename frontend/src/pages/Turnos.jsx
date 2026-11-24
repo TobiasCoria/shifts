@@ -75,7 +75,7 @@ export default function Turnos() {
         {vista === 'reservar' ? <>
           <section className="grid gap-4 rounded-2xl border border-white/10 bg-[#0c1a2b] p-5 md:grid-cols-2">
             <label className="space-y-2 text-sm text-slate-300"><span>Servicio</span><select value={servicioId} onChange={(e) => { setServicioId(e.target.value); setSeleccionado(''); }} className="w-full rounded-lg border border-white/10 bg-[#07111f] px-4 py-3 text-white">{servicios.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}</select></label>
-            <label className="space-y-2 text-sm text-slate-300"><span>Fecha</span><input type="date" value={fecha} min={hoyLocal(usuario?.timezone || 'America/Argentina/Buenos_Aires')} onChange={(e) => { setFecha(e.target.value); setSeleccionado(''); }} className="w-full rounded-lg border border-white/10 bg-[#07111f] px-4 py-3 text-white [color-scheme:dark]" /></label>
+            <label className="space-y-2 text-sm text-slate-300"><span>Fecha</span><input type="date" value={fecha} min={hoyLocal(usuario?.timezone || 'America/Argentina/Buenos_Aires')} onChange={(e) => { setFecha(e.target.value); setSeleccionado(''); }} className="w-full rounded-lg border border-white/10 bg-[#07111f] px-4 py-3 text-white [color-scheme:light]" /></label>
             <div className="md:col-span-2"><p className="mb-1 font-medium capitalize">{fechaLegible(fecha)}</p><p className="text-xs text-slate-400">Los horarios y cupos dependen de la configuración del espacio.</p></div>
           </section>
           <section className="rounded-2xl border border-white/10 bg-[#0c1a2b] p-5">
