@@ -25,8 +25,16 @@ app.get('/test-db', async (req, res) => {
     await pool.execute('SELECT 1');
     res.json({ status: 'OK', message: 'Conexión a la base de datos disponible' });
   } catch (err) {
-    console.error('[test-db] Falló la comprobación de la base de datos:', err.code || err.message);
-    res.status(503).json({ status: 'ERROR', message: 'No se pudo conectar a la base de datos' });
+    const errorCode = err.code || 'DB_CONNECTION_FAILED';
+    console.error('[test-db] Falló la comprobación de la base de datos:', {
+      code: errorCode,
+      message: err.message,
+    });
+    res.status(503).json({
+      status: 'ERROR',
+      code: errorCode,
+      message: 'No se pudo conectar a la base de datos',
+    });
   }
 });
 
