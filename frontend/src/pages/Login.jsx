@@ -68,7 +68,7 @@ export default function Login() {
       ? 'Creá una cuenta para reservar y consultar tus turnos en el local que te invitó.'
       : 'Reservas, equipo y operación en una experiencia clara para vos y tus clientes.';
 
-  return <main className="auth-page">
+  return <main className={`auth-page auth-view-${vista}`}>
     <div className="auth-shell">
       <aside className="auth-side">
         <div className="auth-side-top"><Brand light /></div>

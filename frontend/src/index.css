@@ -115,6 +115,21 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .auth-side { padding: 2rem; }
   .auth-side-message h1 { font-size: 3rem; }
 }
+@media (min-width: 701px) and (max-height: 760px) {
+  .auth-page { display: grid; min-height: 100dvh; place-items: center; padding: .75rem; }
+  .auth-shell { min-height: 0; height: calc(100dvh - 1.5rem); }
+  .auth-side { padding: clamp(1.35rem, 3vh, 2rem) clamp(1.5rem, 3vw, 2.5rem); }
+  .auth-side-message { margin: clamp(1.1rem, 3vh, 2rem) 0; }
+  .auth-side .auth-side-message h1 { margin: .75rem 0 .65rem; font-size: clamp(2.35rem, 3.8vw, 3.25rem); }
+  .auth-side-message p { font-size: .9rem; line-height: 1.55; }
+  .auth-side-bottom { gap: .7rem; }
+  .auth-side-note { margin-top: .2rem; padding-top: .75rem; }
+  .auth-view-login .auth-main { padding: 1.35rem clamp(1.75rem, 3vw, 2.75rem); }
+  .auth-view-login .auth-content { padding: 0; }
+  .auth-view-login .auth-heading { margin-bottom: 1.35rem; }
+  .auth-view-login .auth-heading h2 { font-size: 1.9rem; }
+  .auth-view-login .auth-form { gap: .9rem; }
+}
 @media (max-width: 700px) {
   .auth-page { padding: 0; background: #fff; }
   .auth-shell { display: flex; min-height: 100vh; flex-direction: column; border: 0; border-radius: 0; box-shadow: none; }
