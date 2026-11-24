@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import Brand from '../components/Brand';
 
 export default function Home() {
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -51,10 +52,7 @@ export default function Home() {
           Menú
         </button>
 
-        <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
-          <span className="font-semibold tracking-wide">SHIFTS</span>
-          <span className="text-xs text-[#718197]">{usuario?.organizacion || 'Tu espacio'}</span>
-        </div>
+        <div className="absolute left-1/2 -translate-x-1/2"><Brand compact /></div>
 
         <button 
           onClick={() => navigate(esAdmin ? '/admin' : '/mis-datos')}
@@ -148,9 +146,7 @@ export default function Home() {
           
           <aside className="relative flex h-full w-80 flex-col border-r border-[#dfe4ea] bg-white shadow-2xl animate-slideInRight">
             <div className="border-b border-[#e8ecf0] p-7">
-              <div className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-[#284361] font-semibold text-white">
-                {usuario?.nombre?.charAt(0).toUpperCase()}
-              </div>
+              <div className="mb-4"><Brand compact /></div>
               <h3 className="font-semibold leading-none text-[#15263b]">{usuario?.nombre} {usuario?.apellido}</h3>
               <p className="mt-2 text-xs text-[#718197]">{usuario?.email}</p>
             </div>

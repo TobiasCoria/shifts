@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import CalendarioTurnos from '../pages/Calendarioturnos';
+import Brand from '../components/Brand';
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -142,13 +143,7 @@ export default function Admin() {
       
       {/* SIDEBAR DESKTOP */}
       <aside className="hidden md:flex flex-col w-72 border-r border-[#dfe4ea] bg-white p-6 space-y-8">
-        <div className="flex items-center gap-3 px-2">
-          <div className="w-10 h-10 bg-[#142942] rounded-xl flex items-center justify-center font-semibold text-white">S</div>
-          <div>
-            <h1 className="text-sm font-semibold tracking-wide">SHIFTS</h1>
-            <p className="text-[10px] text-[#718197] uppercase tracking-widest">{usuario?.organizacion || 'Tu espacio'}</p>
-          </div>
-        </div>
+        <div className="flex items-center gap-3 px-2"><Brand compact subtitle={usuario?.organizacion || 'Tu espacio'} /></div>
 
         <nav className="flex-1 space-y-2">
           {[
@@ -182,8 +177,7 @@ export default function Admin() {
         <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#edf2f6] rounded-full blur-[120px] pointer-events-none" />
 
         <header className="sticky top-0 z-40 backdrop-blur-md bg-white/90 border-b border-[#dfe4ea] px-5 py-4 flex items-center justify-between md:hidden">
-          <h2 className="font-semibold text-sm tracking-wide">SHIFTS · Panel</h2>
-          <div className="w-8 h-8 rounded-lg bg-[#142942] grid place-items-center text-white">S</div>
+          <Brand compact subtitle={usuario?.organizacion || 'Panel'} />
         </header>
 
         <nav className="sticky top-[57px] z-30 flex gap-2 overflow-x-auto border-b border-[#dfe4ea] bg-white px-4 py-3 md:hidden">

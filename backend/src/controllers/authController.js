@@ -79,6 +79,48 @@ const registro = async (req, res) => {
   } finally { connection.release(); }
 };
 
+const registroCliente = async (req, res) => {
+  const { nombre, apellido, email, contrasena, slug: slugIngresado } = req.body || {};
+  const emailLimpio = String(email || '').trim().toLowerCase();
+  const slug = String(slugIngresado || '').trim().toLowerCase();
+  if (!nombre || !apellido || !emailLimpio || typeof contrasena !== 'string' || contrasena.length < 10 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+    return res.status(400).json({ error: 'Completá tus datos, el enlace del local y una contraseña de al menos 10 caracteres' });
+  }
+  const nombreLimpio = String(nombre).trim().slice(0, 120);
+  const apellidoLimpio = String(apellido).trim().slice(0, 120);
+  if (nombreLimpio.length < 2 || apellidoLimpio.length < 2 || emailLimpio.length > 254) return res.status(400).json({ error: 'Revisá tu nombre, apellido y correo' });
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [orgs] = await connection.execute('SELECT id, nombre AS organizacion_nombre, slug, tipo_negocio, zona_horaria FROM organizaciones WHERE slug = ? LIMIT 1', [slug]);
+    if (!orgs.length) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'No encontramos ese local. Revisá el enlace que te compartieron.' });
+    }
+    const [existing] = await connection.execute('SELECT id FROM usuarios WHERE email = ? LIMIT 1', [emailLimpio]);
+    if (existing.length) {
+      await connection.rollback();
+      return res.status(409).json({ error: 'Ya existe una cuenta con ese correo. Iniciá sesión para entrar al local.' });
+    }
+    const hash = await bcrypt.hash(contrasena, 12);
+    const [created] = await connection.execute(
+      'INSERT INTO usuarios (nombre, apellido, email, documento, contrasena, rol, organizacion_actual_id) VALUES (?,?,?,?,?,?,?)',
+      [nombreLimpio, apellidoLimpio, emailLimpio, null, hash, 'socio', orgs[0].id]
+    );
+    await connection.execute("INSERT INTO membresias (organizacion_id, usuario_id, rol) VALUES (?, ?, 'socio')", [orgs[0].id, created.insertId]);
+    await connection.commit();
+    const usuario = { id: created.insertId, nombre: nombreLimpio, apellido: apellidoLimpio, email: emailLimpio };
+    const token = jwt.sign({ id: usuario.id, nombre: usuario.nombre }, process.env.JWT_SECRET, { expiresIn: '8h' });
+    res.cookie('tcgym_session', token, cookieOptions(req));
+    res.status(201).json({ usuario: datosUsuario(usuario, { ...orgs[0], rol: 'socio' }) });
+  } catch (err) {
+    await connection.rollback();
+    console.error('[auth.registroCliente]', err.code || err.message);
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Ya existe una cuenta con ese correo. Iniciá sesión para entrar al local.' });
+    res.status(500).json({ error: 'No se pudo crear la cuenta' });
+  } finally { connection.release(); }
+};
+
 const sesion = async (req, res) => {
   const [rows] = await pool.execute('SELECT id, nombre, apellido, email FROM usuarios WHERE id = ?', [req.usuario.id]);
   const [orgs] = await pool.execute('SELECT m.organizacion_id, m.rol, o.nombre AS organizacion_nombre, o.slug, o.tipo_negocio, o.zona_horaria FROM membresias m JOIN organizaciones o ON o.id = m.organizacion_id WHERE m.usuario_id = ? AND m.estado = \'activo\' ORDER BY m.organizacion_id LIMIT 1', [req.usuario.id]);
@@ -88,4 +130,4 @@ const sesion = async (req, res) => {
 
 const logout = (req, res) => { res.clearCookie('tcgym_session', cookieOptions(req)); res.json({ mensaje: 'Sesión cerrada' }); };
 
-module.exports = { login, registro, sesion, logout };
+module.exports = { login, registro, registroCliente, sesion, logout };
