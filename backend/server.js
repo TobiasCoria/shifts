@@ -1,7 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+if (!process.env.JWT_SECRET) {
+  throw new Error('Falta la variable de entorno requerida: JWT_SECRET');
+}
 
 const app = express();
 
@@ -15,6 +19,17 @@ app.use('/api/usuarios', require('./src/routes/usuarios'));
 
 app.get('/', (req, res) => res.json({ mensaje: 'TCGym API funcionando' }));
 
+app.get('/test-db', async (req, res) => {
+  try {
+    const pool = require('./src/config/db');
+    await pool.execute('SELECT 1');
+    res.json({ status: 'OK', message: 'Conexión a la base de datos disponible' });
+  } catch (err) {
+    console.error('[test-db] Falló la comprobación de la base de datos:', err.code || err.message);
+    res.status(503).json({ status: 'ERROR', message: 'No se pudo conectar a la base de datos' });
+  }
+});
+
 app.get('/recordatorios', async (req, res) => {
   const secret = req.headers['x-secret'];
   if (secret !== process.env.CRON_SECRET) {
@@ -27,9 +42,9 @@ app.get('/recordatorios', async (req, res) => {
     manana.setDate(manana.getDate() + 1);
     const fechaManana = manana.toISOString().split('T')[0];
     const [turnos] = await pool.execute(
-      `SELECT t.*, u.nombre, u.email 
-       FROM turnos t 
-       JOIN usuarios u ON t.usuario_id = u.id 
+      `SELECT t.*, u.nombre, u.email
+       FROM turnos t
+       JOIN usuarios u ON t.usuario_id = u.id
        WHERE t.fecha = ? AND t.estado = 'reservado'`,
       [fechaManana]
     );
@@ -43,9 +58,8 @@ app.get('/recordatorios', async (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error('ERROR:', err.message);
-  console.error('STACK:', err.stack);
-  res.status(500).json({ error: err.message });
+  console.error('[api] Error no controlado:', err.code || err.message);
+  res.status(500).json({ error: 'Error del servidor' });
 });
 
 const PORT = process.env.PORT || 3001;

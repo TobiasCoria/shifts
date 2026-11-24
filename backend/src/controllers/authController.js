@@ -3,7 +3,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const login = async (req, res) => {
-  const { email, documento, contrasena } = req.body;
+  const { email, documento, contrasena } = req.body || {};
+
+  if ((!email && !documento) || typeof contrasena !== 'string' || !contrasena) {
+    return res.status(400).json({ error: 'Email o documento y contraseña son requeridos' });
+  }
 
   try {
     let query, params;
@@ -44,12 +48,17 @@ const login = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error('[auth.login] Falló el inicio de sesión:', err.code || err.message);
     res.status(500).json({ error: 'Error del servidor' });
   }
 };
 
 const registro = async (req, res) => {
-  const { nombre, apellido, email, documento, contrasena } = req.body;
+  const { nombre, apellido, email, documento, contrasena } = req.body || {};
+
+  if (!nombre || !apellido || !email || !documento || typeof contrasena !== 'string' || contrasena.length < 6) {
+    return res.status(400).json({ error: 'Completa los datos requeridos y usa una contraseña de al menos 6 caracteres' });
+  }
 
   try {
     const hash = await bcrypt.hash(contrasena, 10);
@@ -59,6 +68,7 @@ const registro = async (req, res) => {
     );
     res.status(201).json({ mensaje: 'Usuario creado exitosamente' });
   } catch (err) {
+    console.error('[auth.registro] Falló el registro:', err.code || err.message);
     if (err.code === 'ER_DUP_ENTRY')
       return res.status(400).json({ error: 'Email o documento ya registrado' });
     res.status(500).json({ error: 'Error del servidor' });
