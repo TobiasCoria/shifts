@@ -97,12 +97,12 @@ export default function Admin() {
   };
 
   const STATS = [
-    { label: 'Clientes', valor: usuarios.length, icon: '01', color: 'from-slate-400 to-sky-300' },
-    { label: 'Turnos hoy', valor: turnosHoy.length, icon: '02', color: 'from-sky-600 to-slate-300' },
-    { label: 'Asistieron', valor: completadosHoy, icon: '03', color: 'from-slate-500 to-sky-300' },
+    { label: 'Clientes', valor: usuarios.length, icon: '01', color: 'from-slate-400 to-[#6B8F71]' },
+    { label: 'Turnos hoy', valor: turnosHoy.length, icon: '02', color: 'from-[#172B4D] to-slate-300' },
+    { label: 'Asistieron', valor: completadosHoy, icon: '03', color: 'from-slate-500 to-[#6B8F71]' },
     { label: 'Cancelados', valor: canceladosHoy, icon: '04', color: 'from-slate-600 to-slate-400' },
-    { label: 'Pendientes', valor: reservadosHoy, icon: '05', color: 'from-slate-400 to-sky-400' },
-    { label: 'Ocupación', valor: ocupacion + '%', icon: '06', color: 'from-sky-700 to-slate-300' },
+    { label: 'Pendientes', valor: reservadosHoy, icon: '05', color: 'from-slate-400 to-[#6B8F71]' },
+    { label: 'Ocupación', valor: ocupacion + '%', icon: '06', color: 'from-[#172B4D] to-slate-300' },
   ];
 
   return (

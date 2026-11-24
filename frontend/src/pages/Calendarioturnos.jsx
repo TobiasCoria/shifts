@@ -21,10 +21,10 @@ export default function CalendarioTurnos() {
         start: `${turno.fecha.split('T')[0]}T${turno.hora}`,
         extendedProps: { estado: turno.estado, hora: turno.hora },
         // Colores dinámicos basados en estado
-        backgroundColor: turno.estado === 'completado' ? 'rgba(34, 197, 94, 0.2)' : 
-                         turno.estado === 'cancelado' ? 'rgba(148, 163, 184, 0.16)' : 'rgba(96, 165, 250, 0.2)',
-        borderColor: turno.estado === 'completado' ? '#22c55e' : 
-                     turno.estado === 'cancelado' ? '#94a3b8' : '#60a5fa',
+        backgroundColor: turno.estado === 'completado' ? 'rgba(107, 143, 113, 0.16)' :
+                         turno.estado === 'cancelado' ? 'rgba(100, 116, 139, 0.12)' : 'rgba(23, 43, 77, 0.10)',
+        borderColor: turno.estado === 'completado' ? '#6B8F71' :
+                     turno.estado === 'cancelado' ? '#94a3b8' : '#172B4D',
       }));
       setEventos(turnosFormateados);
     } catch (err) {
@@ -80,7 +80,7 @@ export default function CalendarioTurnos() {
           .fc .fc-toolbar-title { font-size: 1.15rem !important; font-weight: 600; text-transform: none; letter-spacing: -0.02em; }
           .fc .fc-button-primary { background: white !important; border: 1px solid #dedbd3 !important; color: #292823 !important; font-size: 0.75rem !important; font-weight: 500 !important; text-transform: capitalize !important; border-radius: 10px !important; }
           .fc .fc-button-primary:hover { background: #f5f3ee !important; }
-          .fc .fc-button-active { background: #24231f !important; border-color: #24231f !important; color: white !important; }
+          .fc .fc-button-active { background: #172B4D !important; border-color: #172B4D !important; color: white !important; }
           .fc-v-event { border-width: 0 0 0 3px !important; border-radius: 6px !important; padding: 4px 8px !important; margin: 2px 0 !important; }
           .fc-event-title { font-weight: 600 !important; font-size: 0.75rem !important; }
           .fc-timegrid-slot { height: 3rem !important; }
@@ -128,7 +128,7 @@ export default function CalendarioTurnos() {
                 <>
                   <button 
                     onClick={() => actualizarEstado(modalEvento.id, 'completado')}
-                    className="w-full bg-[#24231f] text-white py-3 rounded-xl font-medium text-sm hover:bg-black transition-all"
+                    className="w-full bg-[#172B4D] text-white py-3 rounded-xl font-medium text-sm hover:bg-[#172B4D] transition-all"
                   >
                     Confirmar Asistencia
                   </button>

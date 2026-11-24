@@ -229,7 +229,7 @@ export default function MisDatos() {
           <button
             onClick={handleGuardar}
             disabled={cargando}
-            className="w-full max-w-sm mx-auto pointer-events-auto bg-[#24231f] hover:bg-black text-white font-medium text-sm py-4 rounded-xl shadow-sm transition-all active:scale-[0.99]"
+            className="w-full max-w-sm mx-auto pointer-events-auto bg-[#172B4D] hover:bg-[#172B4D] text-white font-medium text-sm py-4 rounded-xl shadow-sm transition-all active:scale-[0.99]"
           >
             {cargando ? 'Sincronizando...' : 'Guardar Datos de Atleta'}
           </button>
