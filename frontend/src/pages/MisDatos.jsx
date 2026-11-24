@@ -226,11 +226,11 @@ export default function MisDatos() {
         </section>
 
         {/* Final Save Action */}
-        <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#f4f6f8] to-transparent pointer-events-none">
+        <div className="fixed bottom-0 left-1/2 z-40 w-full max-w-lg -translate-x-1/2 p-6 bg-gradient-to-t from-[#f4f6f8] to-transparent pointer-events-none">
           <button
             onClick={handleGuardar}
             disabled={cargando}
-            className="w-full max-w-sm mx-auto pointer-events-auto bg-[#142942] hover:bg-[#233c58] text-white font-medium text-sm py-4 rounded-xl shadow-sm transition-all active:scale-[0.99]"
+            className="w-full pointer-events-auto bg-[#142942] hover:bg-[#233c58] text-white font-medium text-sm py-4 rounded-xl shadow-sm transition-all active:scale-[0.99]"
           >
             {cargando ? 'Guardando…' : 'Guardar perfil'}
           </button>
