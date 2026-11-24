@@ -74,7 +74,7 @@ export default function Login() {
         <div className="auth-side-top"><Brand light /></div>
         <div className="auth-side-message">
           <span className="auth-eyebrow">Una plataforma. Tu forma de trabajar.</span>
-          <h1>{titulo}</h1>
+          <h1>{vista === 'login' ? <>Todo tu día,<br />en orden.</> : titulo}</h1>
           <p>{descripcion}</p>
         </div>
         <div className="auth-side-bottom">
