@@ -215,7 +215,7 @@ export default function Admin() {
                     <p className="mt-2 text-sm text-[#718197]">{new Intl.DateTimeFormat('es-AR', { dateStyle: 'long', timeZone: usuario?.timezone || 'America/Argentina/Buenos_Aires' }).format(new Date())}</p>
                   </header>
 
-                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#dfe4ea] bg-white p-5"><div><p className="text-sm font-medium">Tu página de reservas</p><p className="mt-1 text-xs text-[#718197]">Compartila con tus clientes para recibir turnos.</p></div><div className="flex gap-2"><a href={urlPublica || '#'} target="_blank" rel="noreferrer" className="rounded-lg border border-[#dfe4ea] px-3 py-2 text-xs text-[#526981]">Abrir página ↗</a><button onClick={() => navigator.clipboard?.writeText(urlPublica)} disabled={!urlPublica} className="rounded-lg bg-[#142942] px-3 py-2 text-xs font-medium text-white disabled:opacity-50">Copiar enlace</button></div></div>
                     {STATS.map((stat, i) => (
                       <div key={i} className="group bg-white border border-[#dfe4ea] p-6 rounded-[2rem] hover:border-[#a9c5b4] transition-all cursor-default relative overflow-hidden">
