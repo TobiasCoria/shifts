@@ -66,6 +66,15 @@ async function migrar() {
         INDEX idx_horarios_lookup (organizacion_id, servicio_id, dia_semana, activo)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+    // Si ya había una tabla horarios de una versión previa, completarla sin reemplazarla.
+    await addColumn('horarios', 'organizacion_id', 'BIGINT UNSIGNED NULL');
+    await addColumn('horarios', 'servicio_id', 'BIGINT UNSIGNED NULL');
+    await addColumn('horarios', 'dia_semana', 'TINYINT UNSIGNED NULL');
+    await addColumn('horarios', 'hora_inicio', 'TIME NULL');
+    await addColumn('horarios', 'hora_fin', 'TIME NULL');
+    await addColumn('horarios', 'intervalo_minutos', 'INT NOT NULL DEFAULT 60');
+    await addColumn('horarios', 'capacidad', 'INT NULL');
+    await addColumn('horarios', 'activo', 'BOOLEAN NOT NULL DEFAULT TRUE');
     await connection.query(`
       CREATE TABLE IF NOT EXISTS recursos (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
